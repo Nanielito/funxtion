@@ -146,6 +146,31 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     ImmutableList<T> drop(int count);
 
     // =========================================================
+    // Combination
+    // =========================================================
+
+    /**
+     * Returns a new list with {@code value} added at the end.
+     *
+     * @throws NullPointerException if {@code value} is null
+     */
+    ImmutableList<T> append(T value);
+
+    /**
+     * Returns a new list with {@code value} added at the beginning.
+     *
+     * @throws NullPointerException if {@code value} is null
+     */
+    ImmutableList<T> prepend(T value);
+
+    /**
+     * Returns a new list containing this list followed by {@code other}.
+     *
+     * @throws NullPointerException if {@code other} is null
+     */
+    ImmutableList<T> concat(ImmutableList<? extends T> other);
+
+    // =========================================================
     // Conversion
     // =========================================================
 
@@ -297,6 +322,33 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             if (count >= values.size())
                 return ImmutableList.empty();
             return new ArrayImmutableList<>(values.subList(count, values.size()));
+        }
+
+        @Override
+        public ImmutableList<T> append(final T value) {
+            Objects.requireNonNull(value, "value must not be null");
+            final List<T> appended = new ArrayList<>(values.size() + 1);
+            appended.addAll(values);
+            appended.add(value);
+            return new ArrayImmutableList<>(appended);
+        }
+
+        @Override
+        public ImmutableList<T> prepend(final T value) {
+            Objects.requireNonNull(value, "value must not be null");
+            final List<T> prepended = new ArrayList<>(values.size() + 1);
+            prepended.add(value);
+            prepended.addAll(values);
+            return new ArrayImmutableList<>(prepended);
+        }
+
+        @Override
+        public ImmutableList<T> concat(final ImmutableList<? extends T> other) {
+            Objects.requireNonNull(other, "other must not be null");
+            final List<T> concatenated = new ArrayList<>(values.size() + other.size());
+            concatenated.addAll(values);
+            concatenated.addAll(other.toList());
+            return new ArrayImmutableList<>(concatenated);
         }
 
         @Override

@@ -801,6 +801,127 @@ class ImmutableListTest {
     }
 
     @Nested
+    class Append {
+
+        @Test
+        void shouldFailWhenValueIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .append(null));
+        }
+
+        @Test
+        void shouldAppendValueToEmptyList() {
+            final ImmutableList<Integer> result = ImmutableList.<Integer>empty()
+                    .append(1);
+
+            assertEquals(List.of(1), result.toList());
+        }
+
+        @Test
+        void shouldAppendValueToNonEmptyList() {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .append(4);
+
+            assertEquals(List.of(1, 2, 3, 4), result.toList());
+        }
+
+        @Test
+        void shouldNotModifyOriginalList() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> result = list.append(4);
+
+            assertEquals(List.of(1, 2, 3), list.toList());
+            assertEquals(List.of(1, 2, 3, 4), result.toList());
+        }
+    }
+
+    @Nested
+    class Prepend {
+
+        @Test
+        void shouldFailWhenValueIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .prepend(null));
+        }
+
+        @Test
+        void shouldPrependValueToEmptyList() {
+            final ImmutableList<Integer> result = ImmutableList.<Integer>empty()
+                    .prepend(1);
+
+            assertEquals(List.of(1), result.toList());
+        }
+
+        @Test
+        void shouldPrependValueToNonEmptyList() {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .prepend(0);
+
+            assertEquals(List.of(0, 1, 2, 3), result.toList());
+        }
+
+        @Test
+        void shouldNotModifyOriginalList() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> result = list.prepend(0);
+
+            assertEquals(List.of(1, 2, 3), list.toList());
+            assertEquals(List.of(0, 1, 2, 3), result.toList());
+        }
+    }
+
+    @Nested
+    class Concat {
+
+        @Test
+        void shouldFailWhenListIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .concat(null));
+        }
+
+        @Test
+        void shouldConcatWithEmptyList() {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .concat(ImmutableList.empty());
+
+            assertEquals(List.of(1, 2, 3), result.toList());
+        }
+
+        @Test
+        void shouldConcatEmptyListWithNonEmptyList() {
+            final ImmutableList<Integer> result = ImmutableList.<Integer>empty()
+                    .concat(ImmutableList.of(1, 2, 3));
+
+            assertEquals(List.of(1, 2, 3), result.toList());
+        }
+
+        @Test
+        void shouldConcatLists() {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .concat(ImmutableList.of(4, 5, 6));
+
+            assertEquals(List.of(1, 2, 3, 4, 5, 6), result.toList());
+        }
+
+        @Test
+        void shouldNotModifyOriginalLists() {
+            final ImmutableList<Integer> left = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> right = ImmutableList.of(4, 5, 6);
+            final ImmutableList<Integer> result = left.concat(right);
+
+            assertEquals(List.of(1, 2, 3), left.toList());
+            assertEquals(List.of(4, 5, 6), right.toList());
+            assertEquals(List.of(1, 2, 3, 4, 5, 6), result.toList());
+        }
+    }
+
+    @Nested
     class ToList {
 
         @Test
