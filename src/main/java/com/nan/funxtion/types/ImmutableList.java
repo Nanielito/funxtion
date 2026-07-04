@@ -1,0 +1,327 @@
+package com.nan.funxtion.types;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import com.nan.funxtion.types.functional.CheckedBiFunction;
+import com.nan.funxtion.types.functional.CheckedFunction;
+import com.nan.funxtion.types.functional.CheckedPredicate;
+
+/**
+ * An immutable, null-rejecting list with functional transformation, search,
+ * reduction, slicing, and conversion operations.
+ *
+ * <p>Instances defensively copy incoming values and expose an unmodifiable
+ * {@link List} through {@link #toList()}.
+ */
+public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableList {
+
+    // =========================================================
+    // Factories
+    // =========================================================
+
+    /**
+     * Creates an empty immutable list.
+     */
+    static <T> ImmutableList<T> empty() {
+        return new ArrayImmutableList<>(List.of());
+    }
+
+    /**
+     * Creates an immutable list from the provided values.
+     *
+     * @throws NullPointerException if the array or any value is null
+     */
+    @SafeVarargs
+    static <T> ImmutableList<T> of(final T... values) {
+        Objects.requireNonNull(values, "values must not be null");
+        return new ArrayImmutableList<>(List.of(values));
+    }
+
+    /**
+     * Creates an immutable list from an iterable, making a defensive copy.
+     *
+     * @throws NullPointerException if the iterable or any value is null
+     */
+    static <T> ImmutableList<T> from(final Iterable<? extends T> iterable) {
+        Objects.requireNonNull(iterable, "iterable must not be null");
+        final List<T> values = new ArrayList<>();
+        for (final T value : iterable)
+            values.add(value);
+        return new ArrayImmutableList<>(List.copyOf(values));
+    }
+
+    // =========================================================
+    // Queries
+    // =========================================================
+
+    int size();
+
+    boolean isEmpty();
+
+    default boolean nonEmpty() {
+        return !isEmpty();
+    }
+
+    Option<T> head();
+
+    Option<T> last();
+
+    /**
+     * Returns {@code None} when the index is out of bounds.
+     */
+    Option<T> get(int index);
+
+    /**
+     * Returns whether the non-null value is present.
+     *
+     * @throws NullPointerException if {@code value} is null
+     */
+    boolean contains(T value);
+
+    // =========================================================
+    // Transformations
+    // =========================================================
+
+    /**
+     * Maps each value, preserving order.
+     *
+     * @throws NullPointerException if the mapper or any mapped value is null
+     */
+    <R> ImmutableList<R> map(CheckedFunction<? super T, ? extends R> mapper) throws Throwable;
+
+    /**
+     * Keeps values that satisfy the predicate, preserving order.
+     */
+    ImmutableList<T> filter(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    /**
+     * Maps each value to an immutable list and concatenates the results.
+     *
+     * @throws NullPointerException if the mapper or any mapped list is null
+     */
+    <R> ImmutableList<R> flatMap(CheckedFunction<? super T, ? extends ImmutableList<? extends R>> mapper) throws Throwable;
+
+    // =========================================================
+    // Search
+    // =========================================================
+
+    Option<T> find(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    boolean any(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    /**
+     * Returns true when every value matches, including for an empty list.
+     */
+    boolean all(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    default boolean none(final CheckedPredicate<? super T> predicate) throws Throwable {
+        return !any(predicate);
+    }
+
+    // =========================================================
+    // Reduction
+    // =========================================================
+
+    /**
+     * Folds from left to right. The initial accumulator may be null.
+     */
+    <R> R foldLeft(R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable;
+
+    /**
+     * Reduces this list from left to right, returning {@code None} for an
+     * empty list.
+     *
+     * @throws NullPointerException if the function or reduced value is null
+     */
+    Option<T> reduce(CheckedBiFunction<? super T, ? super T, ? extends T> function) throws Throwable;
+
+    // =========================================================
+    // Slicing
+    // =========================================================
+
+    ImmutableList<T> take(int count);
+
+    ImmutableList<T> drop(int count);
+
+    // =========================================================
+    // Conversion
+    // =========================================================
+
+    /**
+     * Returns an unmodifiable list view of this immutable list.
+     */
+    List<T> toList();
+
+    /**
+     * Returns a new array containing this list's values.
+     */
+    Object[] toArray();
+
+    // =========================================================
+    // Implementation
+    // =========================================================
+
+    final class ArrayImmutableList<T> implements ImmutableList<T> {
+
+        private final List<T> values;
+
+        private ArrayImmutableList(final List<T> values) {
+            this.values = List.copyOf(Objects.requireNonNull(values, "values must not be null"));
+        }
+        
+        @Override
+        public int size() {
+            return values.size();
+        }
+
+        @Override
+        public boolean isEmpty() {
+            return values.isEmpty();
+        }
+
+        @Override
+        public Option<T> head() {
+            return values.isEmpty() ? Option.none() : Option.some(values.getFirst());
+        }
+
+        @Override
+        public Option<T> last() {
+            return values.isEmpty() ? Option.none() : Option.some(values.getLast());
+        }
+
+        @Override
+        public Option<T> get(final int index) {
+            return index < 0 || index >= values.size() ? Option.none() : Option.some(values.get(index));
+        }
+
+        @Override
+        public boolean contains(final T value) {
+            return values.contains(Objects.requireNonNull(value, "value must not be null"));
+        }
+
+        @Override
+        public <R> ImmutableList<R> map(final CheckedFunction<? super T, ? extends R> mapper) throws Throwable {
+            Objects.requireNonNull(mapper, "mapper must not be null");
+            final List<R> mapped = new ArrayList<>(values.size());
+            for (final T value : values)
+                mapped.add(mapper.apply(value));
+            return new ArrayImmutableList<>(mapped);
+        }
+
+        @Override
+        public ImmutableList<T> filter(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            final List<T> filtered = new ArrayList<>();
+            for (final T value : values)
+                if (predicate.test(value))
+                    filtered.add(value);
+            return new ArrayImmutableList<>(filtered);
+        }
+
+        @Override
+        public <R> ImmutableList<R> flatMap(final CheckedFunction<? super T, ? extends ImmutableList<? extends R>> mapper) throws Throwable {
+            Objects.requireNonNull(mapper, "mapper must not be null");
+            final List<R> flattened = new ArrayList<>();
+            for (final T value : values) {
+                final ImmutableList<? extends R> mapped = Objects.requireNonNull(mapper.apply(value), "flatMap mapper must not return null");
+                flattened.addAll(mapped.toList());
+            }
+            return new ArrayImmutableList<>(flattened);
+        }
+
+        @Override
+        public Option<T> find(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            for (final T value : values) {
+                if (predicate.test(value))
+                    return Option.some(value);
+            }
+            return Option.none();
+        }
+
+        @Override
+        public boolean any(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            for (final T value : values) {
+                if (predicate.test(value))
+                    return true;
+            }
+            return false;
+        }
+
+        @Override
+        public boolean all(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            for (final T value : values) {
+                if (!predicate.test(value))
+                    return false;
+            }
+            return true;
+        }
+
+        @Override
+        public <R> R foldLeft(R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable {
+            Objects.requireNonNull(function, "function must not be null");
+            R result = initial;
+            for (final T value : values)
+                result = function.apply(result, value);
+            return result;
+        }
+
+        @Override
+        public Option<T> reduce(final CheckedBiFunction<? super T, ? super T, ? extends T> function) throws Throwable {
+            Objects.requireNonNull(function, "function must not be null");
+            if (values.isEmpty())
+                return Option.none();
+            T result = values.getFirst();
+            for (int i = 1; i < values.size(); i++)
+                result = function.apply(result, values.get(i));
+            return Option.some(result);
+        }
+
+        @Override
+        public ImmutableList<T> take(int count) {
+            if (count <= 0)
+                return ImmutableList.empty();
+            if (count >= values.size())
+                return this;
+            return new ArrayImmutableList<>(values.subList(0, count));
+        }
+
+        @Override
+        public ImmutableList<T> drop(int count) {
+            if (count <= 0)
+                return this;
+            if (count >= values.size())
+                return ImmutableList.empty();
+            return new ArrayImmutableList<>(values.subList(count, values.size()));
+        }
+
+        @Override
+        public List<T> toList() {
+            return values;
+        }
+
+        @Override
+        public Object[] toArray() {
+            return values.toArray();
+        }
+
+        @Override
+        public boolean equals(final Object obj) {
+            return obj instanceof ArrayImmutableList<?> other && Objects.equals(values, other.values);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(values);
+        }
+
+        @Override
+        public String toString() {
+            return "ImmutableList(%s)".formatted(values);
+        }
+    }
+}
