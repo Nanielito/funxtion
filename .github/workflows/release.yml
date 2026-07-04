@@ -1,0 +1,89 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      bump:
+        description: "Version bump type"
+        required: true
+        default: "patch"
+        type: choice
+        options:
+          - major
+          - minor
+          - patch
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+
+      - name: Install git-cliff
+        uses: taiki-e/install-action@v2
+        with:
+          tool: git-cliff
+
+      - name: Read current version
+        id: version
+        run: |
+          VERSION=$(grep "^version=" gradle.properties | cut -d'=' -f2)
+          echo "current=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Calculate next version
+        id: bump
+        run: |
+          VERSION=${{ steps.version.outputs.current }}
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+
+          if [ "${{ github.event.inputs.bump }}" == "major" ]; then
+            MAJOR=$((MAJOR+1))
+            MINOR=0
+            PATCH=0
+          elif [ "${{ github.event.inputs.bump }}" == "minor" ]; then
+            MINOR=$((MINOR+1))
+            PATCH=0
+          else
+            PATCH=$((PATCH+1))
+          fi
+
+          NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+          echo "newVersion=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        run: |
+          git-cliff --tag v${{ steps.bump.outputs.newVersion }} > CHANGELOG.md
+
+      - name: Commit version + tag
+        run: |
+          NEW_VERSION=${{ steps.bump.outputs.newVersion }}
+          sed -i "s/^version=.*/version=$NEW_VERSION/" gradle.properties
+          git add gradle.properties CHANGELOG.md
+          git commit -m "chore: bump version to $NEW_VERSION"
+          git tag "v$NEW_VERSION"
+          git push origin HEAD:${{ github.ref_name }} --follow-tags
+
+      - name: Publish to GitHub Packages
+        run: ./gradlew publish
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.bump.outputs.newVersion }}
+          name: v${{ steps.bump.outputs.newVersion }}
+          body_path: CHANGELOG.md
