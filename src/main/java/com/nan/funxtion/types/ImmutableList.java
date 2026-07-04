@@ -1,8 +1,7 @@
 package com.nan.funxtion.types;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import com.nan.funxtion.types.functional.CheckedBiFunction;
 import com.nan.funxtion.types.functional.CheckedFunction;
@@ -171,6 +170,31 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     ImmutableList<T> concat(ImmutableList<? extends T> other);
 
     // =========================================================
+    // Ordering
+    // =========================================================
+
+    /**
+     * Returns a new list with the values in reverse order.
+     */
+    ImmutableList<T> reverse();
+
+    /**
+     * Returns a new list sorted by the provided comparator.
+     *
+     * @throws NullPointerException if {@code comparator} is null
+     */
+    ImmutableList<T> sort(Comparator<? super T> comparator);
+
+    // =========================================================
+    // Distinct
+    // =========================================================
+
+    /**
+     * Returns a new list with duplicate values removed, keeping first occurrences.
+     */
+    ImmutableList<T> distinct();
+
+    // =========================================================
     // Conversion
     // =========================================================
 
@@ -183,6 +207,13 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * Returns a new array containing this list's values.
      */
     Object[] toArray();
+
+    /**
+     * Joins values into a string using the provided separator.
+     *
+     * @throws NullPointerException if {@code separator} is null
+     */
+    String mkString(String separator);
 
     // =========================================================
     // Implementation
@@ -287,7 +318,7 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         }
 
         @Override
-        public <R> R foldLeft(R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable {
+        public <R> R foldLeft(final R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable {
             Objects.requireNonNull(function, "function must not be null");
             R result = initial;
             for (final T value : values)
@@ -307,7 +338,7 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         }
 
         @Override
-        public ImmutableList<T> take(int count) {
+        public ImmutableList<T> take(final int count) {
             if (count <= 0)
                 return ImmutableList.empty();
             if (count >= values.size())
@@ -316,7 +347,7 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         }
 
         @Override
-        public ImmutableList<T> drop(int count) {
+        public ImmutableList<T> drop(final int count) {
             if (count <= 0)
                 return this;
             if (count >= values.size())
@@ -352,6 +383,35 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         }
 
         @Override
+        public ImmutableList<T> reverse() {
+            if (values.size() <= 1)
+                return this;
+            final List<T> reversed = new ArrayList<>(values);
+            Collections.reverse(reversed);
+            return new ArrayImmutableList<>(reversed);
+        }
+
+        @Override
+        public ImmutableList<T> sort(final Comparator<? super T> comparator) {
+            Objects.requireNonNull(comparator, "comparator must not be null");
+            if (values.size() <= 1)
+                return this;
+            final List<T> sorted = new ArrayList<>(values);
+            sorted.sort(comparator);
+            return new ArrayImmutableList<>(sorted);
+        }
+
+        @Override
+        public ImmutableList<T> distinct() {
+            if (values.size() <= 1)
+                return this;
+            final List<T> distinct = new ArrayList<>(new LinkedHashSet<>(values));
+            if (distinct.size() == values.size())
+                return this;
+            return new ArrayImmutableList<>(distinct);
+        }
+
+        @Override
         public List<T> toList() {
             return values;
         }
@@ -359,6 +419,14 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         @Override
         public Object[] toArray() {
             return values.toArray();
+        }
+
+        @Override
+        public String mkString(final String separator) {
+            Objects.requireNonNull(separator, "separator must not be null");
+            return values.stream()
+                    .map(String::valueOf)
+                    .collect(Collectors.joining(separator));
         }
 
         @Override

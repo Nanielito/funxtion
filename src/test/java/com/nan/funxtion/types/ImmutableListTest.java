@@ -922,6 +922,124 @@ class ImmutableListTest {
     }
 
     @Nested
+    class Reverse {
+
+        @Test
+        void shouldReturnSameListWhenEmpty() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> result = list.reverse();
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnSameListWhenSingleElement() {
+            final ImmutableList<Integer> list = ImmutableList.of(1);
+            final ImmutableList<Integer> result = list.reverse();
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReverse() {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .reverse();
+
+            assertEquals(List.of(3, 2, 1), result.toList());
+        }
+
+        @Test
+        void shouldNotModifyOriginalList() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> result = list.reverse();
+
+            assertEquals(List.of(1, 2, 3), list.toList());
+            assertEquals(List.of(3, 2, 1), result.toList());
+        }
+    }
+
+    @Nested
+    class Sort {
+
+        @Test
+        void shouldFailWhenComparatorIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .sort(null));
+        }
+
+        @Test
+        void shouldReturnSameListWhenEmpty() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> result = list.sort(Integer::compareTo);
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnSameListWhenSingleElement() {
+            final ImmutableList<Integer> list = ImmutableList.of(1);
+            final ImmutableList<Integer> result = list.sort(Integer::compareTo);
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldSort() {
+            final ImmutableList<Integer> result = ImmutableList.of(3, 2, 1)
+                    .sort(Integer::compareTo);
+
+            assertEquals(List.of(1, 2, 3), result.toList());
+        }
+
+        @Test
+        void shouldNotModifyOriginalList() {
+            final ImmutableList<Integer> list = ImmutableList.of(3, 2, 1);
+            final ImmutableList<Integer> result = list.sort(Integer::compareTo);
+
+            assertEquals(List.of(3, 2, 1), list.toList());
+            assertEquals(List.of(1, 2, 3), result.toList());
+        }
+    }
+
+    @Nested
+    class Distinct {
+
+        @Test
+        void shouldReturnSameListWhenEmpty() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> result = list.distinct();
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnSameListWhenSingleElement() {
+            final ImmutableList<Integer> list = ImmutableList.of(1);
+            final ImmutableList<Integer> result = list.distinct();
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnSameListWhenAllElementsAreDistinct() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> result = list.distinct();
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnDistinctValues() {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 2, 3)
+                    .distinct();
+
+            assertEquals(List.of(1, 2, 3), result.toList());
+        }
+    }
+
+    @Nested
     class ToList {
 
         @Test
@@ -958,6 +1076,42 @@ class ImmutableListTest {
             final Object[] result = list.toArray();
 
             assertArrayEquals(list.toArray(), result);
+        }
+    }
+
+    @Nested
+    class MkString {
+
+        @Test
+        void shouldFailWhenSeparatorIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .mkString(null));
+        }
+
+        @Test
+        void shouldReturnEmptyStringWhenListIsEmpty() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final String result = list.mkString(",");
+
+            assertEquals("", result);
+        }
+
+        @Test
+        void shouldJoinValuesUsingSeparator() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final String result = list.mkString(",");
+
+            assertEquals("1,2,3", result);
+        }
+
+        @Test
+        void shouldJoinSingleValueWithoutSeparator() {
+            final ImmutableList<Integer> list = ImmutableList.of(1);
+            final String result = list.mkString(",");
+
+            assertEquals("1", result);
         }
     }
 
