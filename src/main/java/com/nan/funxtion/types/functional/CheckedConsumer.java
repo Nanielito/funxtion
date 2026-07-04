@@ -9,6 +9,9 @@ public interface CheckedConsumer<T> {
 
     default CheckedConsumer<T> andThen(CheckedConsumer<? super T> after) {
         Objects.requireNonNull(after);
-        return after::accept;
+        return value -> {
+            accept(value);
+            after.accept(value);
+        };
     }
 }

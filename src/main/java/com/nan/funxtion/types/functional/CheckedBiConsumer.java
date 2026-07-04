@@ -9,6 +9,9 @@ public interface CheckedBiConsumer<T, U> {
 
     default CheckedBiConsumer<T, U> andThen(CheckedBiConsumer<? super T, ? super U> after) {
         Objects.requireNonNull(after);
-        return after::accept;
+        return (left, right) -> {
+            accept(left, right);
+            after.accept(left, right);
+        };
     }
 }
