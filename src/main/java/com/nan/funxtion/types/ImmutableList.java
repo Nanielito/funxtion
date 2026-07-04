@@ -208,12 +208,12 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
 
         @Override
         public Option<T> head() {
-            return values.isEmpty() ? Option.none() : Option.some(values.getFirst());
+            return values.isEmpty() ? Option.none() : Option.some(values.get(0));
         }
 
         @Override
         public Option<T> last() {
-            return values.isEmpty() ? Option.none() : Option.some(values.getLast());
+            return values.isEmpty() ? Option.none() : Option.some(values.get(values.size() - 1));
         }
 
         @Override
@@ -300,7 +300,7 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             Objects.requireNonNull(function, "function must not be null");
             if (values.isEmpty())
                 return Option.none();
-            T result = values.getFirst();
+            T result = values.get(0);
             for (int i = 1; i < values.size(); i++)
                 result = function.apply(result, values.get(i));
             return Option.some(result);

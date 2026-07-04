@@ -11,8 +11,7 @@ core algebraic and collection types for writing explicit, composable code:
 
 ## Requirements
 
-- Java 25
-- Gradle wrapper included in the repository
+- Java 21+ (published bytecode targets Java 21; CI builds on Java 21 and 25)
 
 ## Build And Test
 

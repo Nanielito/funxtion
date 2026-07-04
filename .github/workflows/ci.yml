@@ -25,8 +25,8 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 25
+          java-version: ${{ matrix.java }}
           cache: gradle
 
       - name: Build
-        run: ./gradlew clean build
+        run: ./gradlew clean build -PbuildJavaVersion=${{ matrix.java }}
