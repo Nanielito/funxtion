@@ -1,6 +1,15 @@
 # Changelog
 
 
+## v0.1.1 - 2026-07-04
+
+
+
+### <!-- 10 -->💼 Other
+
+- Support java 21 target compatibility (ebaeb46)
+
+
 ## v0.1.0 - 2026-07-04
 
 
@@ -31,5 +40,7 @@
 - Add workflows and release tooling (e187d3a)
 
 - Set initial version (b117e10)
+
+- Bump version to 0.1.0 (bcef4fb)
 
 
