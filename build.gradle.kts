@@ -7,10 +7,13 @@ plugins {
 
 group = "com.nan"
 version = project.property("version") as String
+val buildJavaVersion = providers.gradleProperty("buildJavaVersion")
+    .map(String::toInt)
+    .orElse(25)
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(25))
+        languageVersion.set(JavaLanguageVersion.of(buildJavaVersion.get()))
     }
     withSourcesJar()
     withJavadocJar()
