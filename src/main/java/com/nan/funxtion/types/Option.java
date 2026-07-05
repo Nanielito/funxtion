@@ -100,6 +100,20 @@ public sealed interface Option<T> permits Option.Some, Option.None {
      */
     <L> Either<L, T> toEither(Supplier<? extends L> leftSupplier);
 
+    /**
+     * Converts {@code Some(value)} to a single-value {@code ImmutableList} and
+     * {@code None} to an empty {@code ImmutableList}.
+     */
+    ImmutableList<T> toList();
+
+    /**
+     * Converts {@code Some(value)} to {@code Success(value)} and {@code None}
+     * to {@code Failure(throwableSupplier.get())}.
+     *
+     * @throws NullPointerException if {@code throwableSupplier} or its result is null
+     */
+    Try<T> toTry(Supplier<? extends Throwable> throwableSupplier);
+
     // =========================================================
     // Implementation
     // =========================================================
@@ -170,6 +184,17 @@ public sealed interface Option<T> permits Option.Some, Option.None {
         public <L> Either<L, T> toEither(final Supplier<? extends L> leftSupplier) {
             Objects.requireNonNull(leftSupplier, "leftSupplier must not be null");
             return Either.right(value);
+        }
+
+        @Override
+        public ImmutableList<T> toList() {
+            return ImmutableList.of(value);
+        }
+
+        @Override
+        public Try<T> toTry(final Supplier<? extends Throwable> throwableSupplier) {
+            Objects.requireNonNull(throwableSupplier, "throwableSupplier must not be null");
+            return Try.success(value);
         }
 
         @Override
@@ -255,6 +280,17 @@ public sealed interface Option<T> permits Option.Some, Option.None {
         public <L> Either<L, T> toEither(final Supplier<? extends L> leftSupplier) {
             Objects.requireNonNull(leftSupplier, "leftSupplier must not be null");
             return Either.left(Objects.requireNonNull(leftSupplier.get(), "leftSupplier must not return null"));
+        }
+
+        @Override
+        public ImmutableList<T> toList() {
+            return ImmutableList.empty();
+        }
+
+        @Override
+        public Try<T> toTry(final Supplier<? extends Throwable> throwableSupplier) {
+            Objects.requireNonNull(throwableSupplier, "throwableSupplier must not be null");
+            return Try.failure(Objects.requireNonNull(throwableSupplier.get(), "throwableSupplier must not return null"));
         }
 
         @Override

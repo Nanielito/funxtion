@@ -129,6 +129,12 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
      */
     Either<Throwable, T> toEither();
 
+    /**
+     * Converts {@code Success(value)} to a single-value {@code ImmutableList} and
+     * {@code Failure} to an empty {@code ImmutableList}.
+     */
+    ImmutableList<T> toList();
+
     // =========================================================
     // Internal utilities
     // =========================================================
@@ -242,6 +248,11 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
         }
 
         @Override
+        public ImmutableList<T> toList() {
+            return ImmutableList.of(value);
+        }
+
+        @Override
         public boolean equals(final Object obj) {
             return obj instanceof Success<?> other && Objects.equals(value, other.value);
         }
@@ -345,6 +356,11 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
         @Override
         public Either<Throwable, T> toEither() {
             return Either.left(throwable);
+        }
+
+        @Override
+        public ImmutableList<T> toList() {
+            return ImmutableList.empty();
         }
 
         @Override

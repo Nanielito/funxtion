@@ -1,5 +1,6 @@
 package com.nan.funxtion.types;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -623,6 +624,35 @@ class TryTest {
                         .toEither();
 
                 assertEquals(Either.left(ex), result);
+            }
+        }
+    }
+
+    @Nested
+    class ToList {
+
+        @Nested
+        class Success {
+
+            @Test
+            void shouldConvertToSingletonList() {
+                final ImmutableList<Integer> result = Try.success(10)
+                        .toList();
+
+                assertEquals(List.of(10), result.toList());
+            }
+        }
+
+        @Nested
+        class Failure {
+
+            @Test
+            void shouldConvertToEmptyList() {
+                final Throwable ex = new NullPointerException("boom");
+                final ImmutableList<Integer> result = Try.<Integer>failure(ex)
+                        .toList();
+
+                assertEquals(List.of(), result.toList());
             }
         }
     }

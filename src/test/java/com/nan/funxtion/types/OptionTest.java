@@ -1,5 +1,6 @@
 package com.nan.funxtion.types;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 
@@ -497,6 +498,88 @@ class OptionTest {
                         .toEither(() -> "missing");
 
                 assertEquals(Either.left("missing"), result);
+            }
+        }
+    }
+
+    @Nested
+    class ToList {
+
+        @Nested
+        class Some {
+
+            @Test
+            void shouldConvertToSingletonList() {
+                final ImmutableList<Integer> result = Option.some(10)
+                        .toList();
+
+                assertEquals(List.of(10), result.toList());
+            }
+        }
+
+        @Nested
+        class None {
+
+            @Test
+            void shouldConvertToEmptyList() {
+                final ImmutableList<Integer> result = Option.<Integer>none()
+                        .toList();
+
+                assertEquals(List.of(), result.toList());
+            }
+        }
+    }
+
+    @Nested
+    class ToTry {
+
+        @Nested
+        class Some {
+
+            @Test
+            void shouldFailWhenThrowableSupplierIsNull() {
+                assertThrows(
+                        NullPointerException.class,
+                        () -> Option.some(10)
+                                .toTry(null));
+            }
+
+            @Test
+            void shouldConvertToSuccess() {
+                final Throwable ex = new NullPointerException("error");
+                final Try<Integer> result = Option.some(10)
+                        .toTry(() -> ex);
+
+                assertEquals(Try.success(10), result);
+            }
+        }
+
+        @Nested
+        class None {
+
+            @Test
+            void shouldFailWhenThrowableSupplierIsNull() {
+                assertThrows(
+                        NullPointerException.class,
+                        () -> Option.<Integer>none()
+                                .toTry(null));
+            }
+
+            @Test
+            void shouldFailWhenThrowableSupplierResultIsNull() {
+                assertThrows(
+                        NullPointerException.class,
+                        () -> Option.<Integer>none()
+                                .toTry(() -> null));
+            }
+
+            @Test
+            void shouldConvertToFailure() {
+                final Throwable ex = new NullPointerException("error");
+                final Try<Integer> result = Option.<Integer>none()
+                        .toTry(() -> ex);
+
+                assertEquals(Try.failure(ex), result);
             }
         }
     }
