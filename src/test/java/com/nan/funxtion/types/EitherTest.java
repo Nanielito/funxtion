@@ -1,7 +1,6 @@
 package com.nan.funxtion.types;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -513,6 +512,60 @@ class EitherTest {
                         .toOption();
 
                 assertEquals(Option.some(10), result);
+            }
+        }
+    }
+
+    @Nested
+    class ToTry {
+
+        @Nested
+        class Left {
+
+            @Test
+            void shouldFailWhenLeftMapperIsNull() {
+                assertThrows(
+                        NullPointerException.class,
+                        () -> Either.<String, Integer>left("error")
+                                .toTry(null));
+            }
+
+            @Test
+            void shouldFailWhenLeftMapperResultIsNull() {
+                assertThrows(
+                        NullPointerException.class,
+                        () -> Either.<String, Integer>left("error")
+                                .toTry(v -> null));
+            }
+
+            @Test
+            void shouldConvertToFailure() {
+                final Throwable ex = new NullPointerException("error");
+                final Try<Integer> result = Either.<String, Integer>left("error")
+                        .toTry(v -> ex);
+
+                assertEquals(Try.failure(ex), result);
+            }
+        }
+
+        @Nested
+        class Right {
+
+            @Test
+            void shouldFailWhenLeftMapperIsNull() {
+                assertThrows(
+                        NullPointerException.class,
+                        () -> Either.<String, Integer>right(10)
+                                .toTry(null));
+            }
+
+            @Test
+            void shouldConvertToSuccess() {
+                final Throwable ex = new NullPointerException("error");
+                final Try<Integer> result = Either.<String, Integer>right(10)
+                        .toTry(v -> ex);
+
+                assertEquals(Try.success(10), result);
             }
         }
     }

@@ -109,6 +109,14 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
      */
     Option<R> toOption();
 
+    /**
+     * Converts {@code Right(value)} to {@code Success(value)} and {@code Left}
+     * to {@code Failure(leftMapper.apply(value))}.
+     *
+     * @throws NullPointerException if {@code leftMapper} or its result is null
+     */
+    Try<R> toTry(Function<? super L, ? extends Throwable> leftMapper);
+
     // =========================================================
     // Implementation
     // =========================================================
@@ -192,6 +200,12 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
         @Override
         public Option<R> toOption() {
             return Option.none();
+        }
+
+        @Override
+        public Try<R> toTry(final Function<? super L, ? extends Throwable> leftMapper) {
+            Objects.requireNonNull(leftMapper, "leftMapper must not be null");
+            return Try.failure(Objects.requireNonNull(leftMapper.apply(value), "leftMapper must not return null"));
         }
 
         @Override
@@ -288,6 +302,12 @@ public sealed interface Either<L, R> permits Either.Left, Either.Right {
         @Override
         public Option<R> toOption() {
             return Option.some(value);
+        }
+
+        @Override
+        public Try<R> toTry(final Function<? super L, ? extends Throwable> leftMapper) {
+            Objects.requireNonNull(leftMapper, "leftMapper must not be null");
+            return Try.success(value);
         }
 
         @Override
