@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.nan.tuplex.Tuple;
+
 class ImmutableListTest {
 
     @Nested
@@ -423,6 +425,65 @@ class ImmutableListTest {
     }
 
     @Nested
+    class Partition {
+
+        @Test
+        void shouldFailWhenPredicateIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .partition(null));
+        }
+
+        @Test
+        void shouldPropagatePredicateException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.partition(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldPartitionEmptyList() throws Throwable {
+            final Tuple result = ImmutableList.<Integer>empty()
+                    .partition(v -> v > 10);
+
+            assertEquals(ImmutableList.empty(), result.get(1));
+            assertEquals(ImmutableList.empty(), result.get(2));
+        }
+
+        @Test
+        void shouldPartitionValuesPreservingOrder() throws Throwable {
+            final Tuple result = ImmutableList.of(1, 2, 3, 4, 5)
+                    .partition(v -> v % 2 == 0);
+
+            assertEquals(ImmutableList.of(2, 4), result.get(1));
+            assertEquals(ImmutableList.of(1, 3, 5), result.get(2));
+        }
+
+        @Test
+        void shouldPutAllValuesInMatchingWhenAllMatch() throws Throwable {
+            final Tuple result = ImmutableList.of(2, 4, 6)
+                    .partition(v -> v % 2 == 0);
+
+            assertEquals(ImmutableList.of(2, 4, 6), result.get(1));
+            assertEquals(ImmutableList.empty(), result.get(2));
+        }
+
+        @Test
+        void shouldPutAllValuesInNonMatchingWhenNoneMatch() throws Throwable {
+            final Tuple result = ImmutableList.of(1, 3, 5)
+                    .partition(v -> v % 2 == 0);
+
+            assertEquals(ImmutableList.empty(), result.get(1));
+            assertEquals(ImmutableList.of(1, 3, 5), result.get(2));
+        }
+    }
+
+    @Nested
     class Find {
 
         @Test
@@ -607,6 +668,53 @@ class ImmutableListTest {
                     .none(v -> v % 2 == 0);
 
             assertFalse(result);
+        }
+    }
+
+    @Nested
+    class Count {
+
+        @Test
+        void shouldFailWhenPredicateIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .count(null));
+        }
+
+        @Test
+        void shouldPropagatePredicateException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.count(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnZeroWhenCountingEmptyList() throws Throwable {
+            final int result = ImmutableList.<Integer>empty()
+                    .count(v -> v > 10);
+
+            assertEquals(0, result);
+        }
+
+        @Test
+        void shouldReturnZeroWhenNoElementsMatchPredicate() throws Throwable {
+            final int result = ImmutableList.of(1, 2, 3)
+                    .count(v -> v > 10);
+
+            assertEquals(0, result);
+        }
+
+        @Test
+        void shouldCountMatchingElements() throws Throwable {
+            final int result = ImmutableList.of(1, 2, 3, 4)
+                    .count(v -> v % 2 == 0);
+
+            assertEquals(2, result);
         }
     }
 
