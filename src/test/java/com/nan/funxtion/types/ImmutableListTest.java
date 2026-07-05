@@ -888,6 +888,61 @@ class ImmutableListTest {
     }
 
     @Nested
+    class ScanRight {
+
+        @Test
+        void shouldFailWhenInitialIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .scanRight(null, Integer::sum));
+        }
+
+        @Test
+        void shouldFailWhenFunctionIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .scanRight(0, null));
+        }
+
+        @Test
+        void shouldFailWhenFunctionResultIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .scanRight(0, (a, b) -> null));
+        }
+
+        @Test
+        void shouldPropagateFunctionException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.scanRight(0, (a, b) -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnInitialValueWhenScanningEmptyList() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.<Integer>empty()
+                    .scanRight(0, Integer::sum);
+
+            assertEquals(List.of(0), result.toList());
+        }
+
+        @Test
+        void shouldScanFromRight() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .scanRight(0, Integer::sum);
+
+            assertEquals(List.of(6, 5, 3, 0), result.toList());
+        }
+    }
+
+    @Nested
     class Reduce {
 
         @Test
