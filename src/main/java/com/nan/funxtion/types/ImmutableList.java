@@ -163,6 +163,14 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     <R> R foldLeft(R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable;
 
     /**
+     * Folds from left to right, returning every intermediate accumulator including
+     * the initial value.
+     *
+     * @throws NullPointerException if {@code initial}, {@code function}, or any intermediate accumulator value is null
+     */
+    <R> ImmutableList<R> scanLeft(R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable;
+
+    /**
      * Reduces this list from left to right, returning {@code None} for an
      * empty list.
      *
@@ -412,6 +420,21 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             for (final T value : values)
                 result = function.apply(result, value);
             return result;
+        }
+
+        @Override
+        public <R> ImmutableList<R> scanLeft(final R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable {
+            Objects.requireNonNull(initial, "initial must not be null");
+            Objects.requireNonNull(function, "function must not be null");
+            final List<R> scanned = new ArrayList<>(values.size() + 1);
+            R accumulator = initial;
+            scanned.add(accumulator);
+            for (final T value : values) {
+                accumulator = Objects.requireNonNull(
+                        function.apply(accumulator, value), "scanLeft function must not return null");
+                scanned.add(accumulator);
+            }
+            return new ArrayImmutableList<>(scanned);
         }
 
         @Override
