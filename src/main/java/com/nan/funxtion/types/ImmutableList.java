@@ -3,8 +3,10 @@ package com.nan.funxtion.types;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
@@ -114,6 +116,18 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     // =========================================================
 
     Tuple partition(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    // =========================================================
+    // Grouping
+    // =========================================================
+
+    /**
+     * Groups values by a non-null classifier result, preserving the order in
+     * which group keys first appear.
+     *
+     * @throws NullPointerException if {@code classifier} or any classifier result is null
+     */
+    <K> Map<K, ImmutableList<T>> groupBy(CheckedFunction<? super T, ? extends K> classifier) throws Throwable;
 
     // =========================================================
     // Search
@@ -319,6 +333,22 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
                     nonMatching.add(value);
             }
             return Tuples.of(new ArrayImmutableList<>(matching), new ArrayImmutableList<>(nonMatching));
+        }
+
+        @Override
+        public <K> Map<K, ImmutableList<T>> groupBy(final CheckedFunction<? super T, ? extends K> classifier) throws Throwable {
+            Objects.requireNonNull(classifier, "classifier must not be null");
+            final Map<K, List<T>> groups = new LinkedHashMap<>();
+            for (final T value : values) {
+                final K key = Objects.requireNonNull(classifier.apply(value), "classifier must not return null");
+                groups.computeIfAbsent(key, ignored -> new ArrayList<>()).add(value);
+            }
+
+            final Map<K, ImmutableList<T>> grouped = new LinkedHashMap<>();
+            for (final Map.Entry<K, List<T>> entry : groups.entrySet())
+                grouped.put(entry.getKey(), new ArrayImmutableList<>(entry.getValue()));
+
+            return Collections.unmodifiableMap(grouped);
         }
 
         @Override

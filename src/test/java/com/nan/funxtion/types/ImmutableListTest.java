@@ -484,6 +484,72 @@ class ImmutableListTest {
     }
 
     @Nested
+    class GroupBy {
+
+        @Test
+        void shouldFailWhenClassifierIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .groupBy(null));
+        }
+
+        @Test
+        void shouldFailWhenClassifierResultIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .groupBy(v -> null));
+        }
+
+        @Test
+        void shouldPropagateClassifierException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.groupBy(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnEmptyMapWhenListIsEmpty() throws Throwable {
+            final java.util.Map<String, ImmutableList<Integer>> result = ImmutableList.<Integer>empty()
+                    .groupBy(v -> v % 2 == 0 ? "even" : "odd");
+
+            assertEquals(java.util.Map.of(), result);
+        }
+
+        @Test
+        void shouldGroupValuesPreservingValueOrder() throws Throwable {
+            final java.util.Map<String, ImmutableList<Integer>> result = ImmutableList.of(1, 2, 3, 4, 5)
+                    .groupBy(v -> v % 2 == 0 ? "even" : "odd");
+
+            assertEquals(ImmutableList.of(1, 3, 5), result.get("odd"));
+            assertEquals(ImmutableList.of(2, 4), result.get("even"));
+        }
+
+        @Test
+        void shouldPreserveKeyInsertionOrder() throws Throwable {
+            final java.util.Map<String, ImmutableList<Integer>> result = ImmutableList.of(1, 2, 3, 4)
+                    .groupBy(v -> v % 2 == 0 ? "even" : "odd");
+
+            assertEquals(List.of("odd", "even"), new ArrayList<>(result.keySet()));
+        }
+
+        @Test
+        void shouldReturnUnmodifiableMap() throws Throwable {
+            final java.util.Map<String, ImmutableList<Integer>> result = ImmutableList.of(1, 2, 3)
+                    .groupBy(v -> v % 2 == 0 ? "even" : "odd");
+
+            assertThrows(
+                    UnsupportedOperationException.class,
+                    () -> result.put("other", ImmutableList.empty()));
+        }
+    }
+
+    @Nested
     class Find {
 
         @Test
