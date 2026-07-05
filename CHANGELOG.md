@@ -1,6 +1,24 @@
 # Changelog
 
 
+## v0.2.0 - 2026-07-05
+
+
+
+### <!-- 0 -->🚀 Features
+
+- Add immutable list extra operations (f230c92)
+
+- Add type conversions (70ac339)
+
+- Add immutable list partitioning operations (e519671)
+
+
+### <!-- 3 -->📚 Documentation
+
+- Document tuple-backed partitioning (7cc80c8)
+
+
 ## v0.1.1 - 2026-07-04
 
 
@@ -8,6 +26,11 @@
 ### <!-- 10 -->💼 Other
 
 - Support java 21 target compatibility (ebaeb46)
+
+
+### <!-- 7 -->⚙️ Miscellaneous Tasks
+
+- Bump version to 0.1.1 (52daec2)
 
 
 ## v0.1.0 - 2026-07-04
