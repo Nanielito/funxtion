@@ -1,3 +1,6 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
+
 plugins {
     id("java")
     id("java-library")
@@ -10,6 +13,9 @@ version = project.property("version") as String
 val buildJavaVersion = providers.gradleProperty("buildJavaVersion")
     .map(String::toInt)
     .orElse(25)
+
+fun environmentVariableOrNull(name: String): String? =
+    providers.environmentVariable(name).orNull?.takeIf(String::isNotBlank)
 
 java {
     toolchain {
@@ -25,9 +31,24 @@ tasks.withType<JavaCompile>().configureEach {
 
 repositories {
     mavenCentral()
+    maven {
+        name = "GitHubPackages"
+        url = uri("https://maven.pkg.github.com/nanielito/maven-packages")
+        credentials {
+            username = environmentVariableOrNull("GITHUB_PACKAGES_USER")
+                ?: environmentVariableOrNull("GITHUB_ACTOR")
+            password = environmentVariableOrNull("GITHUB_PACKAGES_TOKEN")
+                ?: environmentVariableOrNull("GITHUB_TOKEN")
+        }
+        content {
+            includeGroup("com.nan")
+        }
+    }
 }
 
 dependencies {
+    implementation("com.nan:tuplex:1.0.0")
+
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
@@ -35,6 +56,23 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+
+    testLogging {
+        events = setOf(
+            TestLogEvent.PASSED,
+            TestLogEvent.SKIPPED,
+            TestLogEvent.FAILED
+        )
+        exceptionFormat = TestExceptionFormat.FULL
+        showCauses = true
+        showExceptions = true
+        showStackTraces = true
+    }
+
+    reports {
+        html.required.set(true)
+        junitXml.required.set(true)
+    }
 }
 
 publishing {
