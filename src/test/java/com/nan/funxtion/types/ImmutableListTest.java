@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import com.nan.tuplex.Tuple;
+import com.nan.tuplex.Tuples;
 
 class ImmutableListTest {
 
@@ -1092,6 +1093,150 @@ class ImmutableListTest {
             assertEquals(List.of(1, 2, 3), left.toList());
             assertEquals(List.of(4, 5, 6), right.toList());
             assertEquals(List.of(1, 2, 3, 4, 5, 6), result.toList());
+        }
+    }
+
+    @Nested
+    class Zip {
+
+        @Test
+        void shouldFailWhenOtherIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .zip(null));
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenThisListIsEmpty() {
+            final ImmutableList<Tuple> result = ImmutableList.<Integer>empty()
+                    .zip(ImmutableList.of("a", "b", "c"));
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenOtherListIsEmpty() {
+            final ImmutableList<Tuple> result = ImmutableList.of(1, 2, 3)
+                    .zip(ImmutableList.<Integer>empty());
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldZipListsWithSameSize() {
+            final ImmutableList<Tuple> result = ImmutableList.of(1, 2, 3)
+                    .zip(ImmutableList.of("a", "b", "c"));
+
+            assertEquals(
+                    List.of(
+                            Tuples.of(1, "a"),
+                            Tuples.of(2, "b"),
+                            Tuples.of(3, "c")),
+                    result.toList());
+        }
+
+        @Test
+        void shouldZipUntilShortestListWhenThisListIsShorter() {
+            final ImmutableList<Tuple> result = ImmutableList.of(1, 2)
+                    .zip(ImmutableList.of("a", "b", "c"));
+
+            assertEquals(
+                    List.of(
+                            Tuples.of(1, "a"),
+                            Tuples.of(2, "b")),
+                    result.toList());
+        }
+
+        @Test
+        void shouldZipUntilShortestListWhenOtherListIsShorter() {
+            final ImmutableList<Tuple> result = ImmutableList.of(1, 2, 3)
+                    .zip(ImmutableList.of("a", "b"));
+
+            assertEquals(
+                    List.of(
+                            Tuples.of(1, "a"),
+                            Tuples.of(2, "b")),
+                    result.toList());
+        }
+    }
+
+    @Nested
+    class ZipWith {
+
+        @Test
+        void shouldFailWhenOtherIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .zipWith(null, Integer::sum));
+        }
+
+        @Test
+        void shouldFailWhenFunctionIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .zipWith(ImmutableList.of("a", "b", "c"), null));
+        }
+
+        @Test
+        void shouldFailWhenFunctionReturnsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .zipWith(ImmutableList.of("a", "b", "c"), (left, right) -> null));
+        }
+
+        @Test
+        void shouldPropagateFunctionException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.zipWith(ImmutableList.of("a", "b", "c"), (left, right) -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenThisListIsEmpty() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.<Integer>empty()
+                    .zipWith(ImmutableList.of(10, 20, 30), Integer::sum);
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenOtherListIsEmpty() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .zipWith(ImmutableList.empty(), Integer::sum);
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldZipListsWithSameSize() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .zipWith(ImmutableList.of(10, 20, 30), Integer::sum);
+
+            assertEquals(List.of(11, 22, 33), result.toList());
+        }
+
+        @Test
+        void shouldZipUntilShortestListWhenThisListIsShorter() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2)
+                    .zipWith(ImmutableList.of(10, 20, 30), Integer::sum);
+
+            assertEquals(List.of(11, 22), result.toList());
+        }
+
+        @Test
+        void shouldZipUntilShortestListWhenOtherListIsShorter() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .zipWith(ImmutableList.of(10, 20), Integer::sum);
+
+            assertEquals(List.of(11, 22), result.toList());
         }
     }
 

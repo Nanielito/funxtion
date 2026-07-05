@@ -203,6 +203,20 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      */
     ImmutableList<T> concat(ImmutableList<? extends T> other);
 
+    /**
+     * Combines this list with {@code other} into tuples, stopping at the shortest list.
+     *
+     * @throws NullPointerException if {@code other} is null
+     */
+    <U> ImmutableList<Tuple> zip(ImmutableList<? extends U> other);
+
+    /**
+     * Combines this list with {@code other} using {@code function}, stopping at the shortest list.
+     *
+     * @throws NullPointerException if {@code other}, {@code function}, or any combined value is null
+     */
+    <U, R> ImmutableList<R> zipWith(ImmutableList<? extends U> other, CheckedBiFunction<? super T, ? super U, ? extends R> function) throws Throwable;
+
     // =========================================================
     // Ordering
     // =========================================================
@@ -454,6 +468,34 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             concatenated.addAll(values);
             concatenated.addAll(other.toList());
             return new ArrayImmutableList<>(concatenated);
+        }
+
+        @Override
+        public <U> ImmutableList<Tuple> zip(final ImmutableList<? extends U> other) {
+            Objects.requireNonNull(other, "other must not be null");
+            final List<? extends U> otherValues = other.toList();
+            final int size = Math.min(values.size(), otherValues.size());
+            final List<Tuple> zipped = new ArrayList<>(size);
+            for (int i = 0; i < size; i++)
+                zipped.add(Tuples.of(values.get(i), otherValues.get(i)));
+            return new ArrayImmutableList<>(zipped);
+        }
+
+        @Override
+        public <U, R> ImmutableList<R> zipWith(
+                final ImmutableList<? extends U> other,
+                CheckedBiFunction<? super T, ? super U, ? extends R> function) throws Throwable {
+            Objects.requireNonNull(other, "other must not be null");
+            Objects.requireNonNull(function, "function must not be null");
+            final List<? extends U> otherValues = other.toList();
+            final int size = Math.min(values.size(), otherValues.size());
+            final List<R> zipped = new ArrayList<>(size);
+            for (int i = 0; i < size; i++) {
+                final R value = Objects.requireNonNull(
+                        function.apply(values.get(i), otherValues.get(i)), "zipWith function must not return null");
+                zipped.add(value);
+            }
+            return new ArrayImmutableList<>(zipped);
         }
 
         @Override
