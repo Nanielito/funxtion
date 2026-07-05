@@ -1,11 +1,18 @@
 package com.nan.funxtion.types;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import com.nan.funxtion.types.functional.CheckedBiFunction;
 import com.nan.funxtion.types.functional.CheckedFunction;
 import com.nan.funxtion.types.functional.CheckedPredicate;
+import com.nan.tuplex.Tuple;
+import com.nan.tuplex.Tuples;
 
 /**
  * An immutable, null-rejecting list with functional transformation, search,
@@ -103,6 +110,12 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     <R> ImmutableList<R> flatMap(CheckedFunction<? super T, ? extends ImmutableList<? extends R>> mapper) throws Throwable;
 
     // =========================================================
+    // Partitioning
+    // =========================================================
+
+    Tuple partition(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    // =========================================================
     // Search
     // =========================================================
 
@@ -118,6 +131,13 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     default boolean none(final CheckedPredicate<? super T> predicate) throws Throwable {
         return !any(predicate);
     }
+
+    /**
+     * Counts values that satisfy the predicate.
+     *
+     * @throws NullPointerException if {@code predicate} is null
+     */
+    int count(CheckedPredicate<? super T> predicate) throws Throwable;
 
     // =========================================================
     // Reduction
@@ -288,6 +308,20 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         }
 
         @Override
+        public Tuple partition(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            final List<T> matching = new ArrayList<>();
+            final List<T> nonMatching = new ArrayList<>();
+            for (final T value : values) {
+                if (predicate.test(value))
+                    matching.add(value);
+                else
+                    nonMatching.add(value);
+            }
+            return Tuples.of(new ArrayImmutableList<>(matching), new ArrayImmutableList<>(nonMatching));
+        }
+
+        @Override
         public Option<T> find(final CheckedPredicate<? super T> predicate) throws Throwable {
             Objects.requireNonNull(predicate, "predicate must not be null");
             for (final T value : values) {
@@ -315,6 +349,16 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
                     return false;
             }
             return true;
+        }
+
+        @Override
+        public int count(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            int count = 0;
+            for (final T value : values)
+                if (predicate.test(value))
+                    count++;
+            return count;
         }
 
         @Override
