@@ -28,6 +28,11 @@ Build artifacts:
 ./gradlew build
 ```
 
+## Contributing
+
+Development workflow, branch conventions, validation, and pull request guidance
+are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Examples
 
 ### Option
