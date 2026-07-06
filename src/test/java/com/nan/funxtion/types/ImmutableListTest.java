@@ -1188,6 +1188,100 @@ class ImmutableListTest {
     }
 
     @Nested
+    class Sliding {
+
+        @Test
+        void shouldFailWhenWindowSizeIsNegative() {
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> ImmutableList.of(1, 2, 3, 4)
+                            .sliding(-1, 2));
+
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> ImmutableList.of(1, 2, 3, 4)
+                            .sliding(-1));
+        }
+
+        @Test
+        void shouldFailWhenWindowSizeIsZero() {
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> ImmutableList.of(1, 2, 3, 4)
+                            .sliding(0, 2));
+
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> ImmutableList.of(1, 2, 3, 4)
+                            .sliding(0));
+        }
+
+        @Test
+        void shouldFailWhenStepIsNegative() {
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> ImmutableList.of(1, 2, 3, 4)
+                            .sliding(2, -1));
+        }
+
+        @Test
+        void shouldFailWhenStepIsZero() {
+            assertThrows(
+                    IllegalArgumentException.class,
+                    () -> ImmutableList.of(1, 2, 3, 4)
+                            .sliding(2, 0));
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenThisListIsEmpty() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<ImmutableList<Integer>> resultA = list.sliding(2, 2);
+            final ImmutableList<ImmutableList<Integer>> resultB = list.sliding(2);
+
+            assertEquals(List.of(), resultA.toList());
+            assertEquals(List.of(), resultB.toList());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenWindowSizeIsGreaterThanListSize() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3, 4);
+            final ImmutableList<ImmutableList<Integer>> resultA = list.sliding(5, 2);
+            final ImmutableList<ImmutableList<Integer>> resultB = list.sliding(5);
+
+            assertEquals(List.of(), resultA.toList());
+            assertEquals(List.of(), resultB.toList());
+        }
+
+        @Test
+        void shouldReturnSingleWindowWhenWindowSizeIsEqualToListSize() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3, 4);
+            final ImmutableList<ImmutableList<Integer>> resultA = list.sliding(4, 1);
+            final ImmutableList<ImmutableList<Integer>> resultB = list.sliding(4);
+
+            assertEquals(List.of(ImmutableList.of(1, 2, 3, 4)), resultA.toList());
+            assertEquals(List.of(ImmutableList.of(1, 2, 3, 4)), resultB.toList());
+        }
+
+        @Test
+        void shouldReturnSingleWindowWhenStepIsGreaterThanListSize() {
+            final ImmutableList<ImmutableList<Integer>> result = ImmutableList.of(1, 2, 3, 4)
+                    .sliding(2, 10);
+
+            assertEquals(List.of(ImmutableList.of(1, 2)), result.toList());
+        }
+
+        @Test
+        void shouldSlideOverList() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3, 4, 5);
+            final ImmutableList<ImmutableList<Integer>> resultA = list.sliding(2, 2);
+            final ImmutableList<ImmutableList<Integer>> resultB = list.sliding(2);
+
+            assertEquals(List.of(ImmutableList.of(1, 2), ImmutableList.of(3, 4)), resultA.toList());
+            assertEquals(List.of(ImmutableList.of(1, 2), ImmutableList.of(2, 3), ImmutableList.of(3, 4), ImmutableList.of(4, 5)), resultB.toList());
+        }
+    }
+
+    @Nested
     class Append {
 
         @Test

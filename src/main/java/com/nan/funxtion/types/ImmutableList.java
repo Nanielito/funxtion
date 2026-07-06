@@ -348,6 +348,29 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     ImmutableList<T> drop(int count);
 
     // =========================================================
+    // Windows
+    // =========================================================
+
+    /**
+     * Returns fixed-size sliding windows separated by {@code step} values.
+     *
+     * @param size the size of each window
+     * @param step the distance between the start of consecutive windows
+     * @return an immutable list containing each complete window
+     * @throws IllegalArgumentException if {@code size} or {@code step} is less than or equal to zero
+     */
+    ImmutableList<ImmutableList<T>> sliding(int size, int step);
+
+    /**
+     * Returns fixed-size sliding windows with a step of {@code 1}.
+     *
+     * @param size the size of each window
+     * @return an immutable list containing each complete window
+     * @throws IllegalArgumentException if {@code size} is less than or equal to zero
+     */
+    ImmutableList<ImmutableList<T>> sliding(int size);
+
+    // =========================================================
     // Combination
     // =========================================================
 
@@ -694,6 +717,25 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             if (count >= values.size())
                 return ImmutableList.empty();
             return new ArrayImmutableList<>(values.subList(count, values.size()));
+        }
+
+        @Override
+        public ImmutableList<ImmutableList<T>> sliding(final int size, final int step) {
+            if (size <= 0)
+                throw new IllegalArgumentException("size must be greater than zero");
+            if (step <= 0)
+                throw new IllegalArgumentException("step must be greater than zero");
+            if (values.isEmpty() || size > values.size())
+                return ImmutableList.empty();
+            final List<ImmutableList<T>> windows = new ArrayList<>();
+            for (int start = 0; start + size <= values.size(); start += step)
+                windows.add(new ArrayImmutableList<>(values.subList(start, start + size)));
+            return new ArrayImmutableList<>(windows);
+        }
+
+        @Override
+        public ImmutableList<ImmutableList<T>> sliding(final int size) {
+            return sliding(size, 1);
         }
 
         @Override
