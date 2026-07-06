@@ -14,6 +14,8 @@ import java.util.function.Supplier;
  * <p>{@code Try.of} captures non-fatal throwables as {@code Failure}. Fatal
  * JVM errors are rethrown, and {@link InterruptedException} restores the
  * thread interrupt flag before being stored as a failure.
+ *
+ * @param <T> the success value type
  */
 public sealed interface Try<T> permits Try.Success, Try.Failure {
 
@@ -24,6 +26,9 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     /**
      * Creates a successful {@code Try} with a non-null value.
      *
+     * @param <T> the success value type
+     * @param value the non-null success value to wrap
+     * @return a {@code Success} containing {@code value}
      * @throws NullPointerException if {@code value} is null
      */
     static <T> Try<T> success(T value) {
@@ -33,6 +38,9 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     /**
      * Creates a failed {@code Try} with a non-null throwable.
      *
+     * @param <T> the success value type
+     * @param throwable the non-null throwable to wrap
+     * @return a {@code Failure} containing {@code throwable}
      * @throws NullPointerException if {@code throwable} is null
      */
     static <T> Try<T> failure(Throwable throwable) {
@@ -43,6 +51,9 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
      * Runs a checked supplier and captures non-fatal throwables as
      * {@code Failure}.
      *
+     * @param <T> the success value type
+     * @param supplier the supplier to run
+     * @return {@code Success} with the supplied value, or {@code Failure} with a captured throwable
      * @throws NullPointerException if {@code supplier} or its success result is null
      */
     @SuppressWarnings("unchecked")
@@ -64,12 +75,22 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     /**
      * Maps a successful value; failures pass through unchanged. Exceptions
      * thrown by the mapper are captured as {@code Failure}.
+     *
+     * @param <R> the mapped success value type
+     * @param mapper the function used to map a successful value
+     * @return a {@code Try} containing the mapped success or a failure
+     * @throws NullPointerException if {@code mapper} is null
      */
     <R> Try<R> map(CheckedFunction<? super T, ? extends R> mapper);
 
     /**
      * Maps a successful value to another {@code Try}; failures pass through
      * unchanged. Exceptions thrown by the mapper are captured as {@code Failure}.
+     *
+     * @param <R> the mapped success value type
+     * @param mapper the function used to map a successful value to a {@code Try}
+     * @return the mapped {@code Try} for {@code Success}, or this failure
+     * @throws NullPointerException if {@code mapper} is null
      */
     <R> Try<R> flatMap(CheckedFunction<? super T, ? extends Try<? extends R>> mapper);
 
@@ -80,12 +101,20 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     /**
      * Converts a failure into a success when the recovery function succeeds.
      * Successful values pass through unchanged.
+     *
+     * @param recovery the function used to recover from a failure
+     * @return this {@code Try} when successful, or the recovered result
+     * @throws NullPointerException if {@code recovery} is null
      */
     Try<T> recover(CheckedFunction<? super Throwable, ? extends T> recovery);
 
     /**
      * Converts a failure into another {@code Try}. Successful values pass
      * through unchanged.
+     *
+     * @param recovery the function used to recover from a failure
+     * @return this {@code Try} when successful, or the recovered {@code Try}
+     * @throws NullPointerException if {@code recovery} is null
      */
     Try<T> recoverWith(CheckedFunction<? super Throwable, ? extends Try<? extends T>> recovery);
 
@@ -93,6 +122,15 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     // Folding
     // =========================================================
 
+    /**
+     * Folds this try by evaluating the mapper for the present state.
+     *
+     * @param <R> the folded result type
+     * @param failureMapper the function used when this is {@code Failure}
+     * @param successMapper the function used when this is {@code Success}
+     * @return the folded result
+     * @throws NullPointerException if {@code failureMapper} or {@code successMapper} is null
+     */
     <R> R fold(
             Function<? super Throwable, ? extends R> failureMapper,
             Function<? super T, ? extends R> successMapper);
@@ -101,18 +139,48 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     // Extraction
     // =========================================================
 
+    /**
+     * Returns the success value or the provided fallback.
+     *
+     * @param other the fallback value returned when this is {@code Failure}
+     * @return the success value, or {@code other}
+     */
     T getOrElse(T other);
 
+    /**
+     * Returns the success value or gets a fallback from the supplier.
+     *
+     * @param supplier the fallback supplier used when this is {@code Failure}
+     * @return the success value, or the supplied fallback
+     * @throws NullPointerException if this is {@code Failure} and {@code supplier} is null
+     */
     T getOrElseGet(Supplier<? extends T> supplier);
 
+    /**
+     * Returns this try when successful, otherwise returns {@code other}.
+     *
+     * @param other the fallback try used when this is {@code Failure}
+     * @return this try when successful, otherwise {@code other}
+     * @throws NullPointerException if {@code other} is null
+     */
     Try<T> orElse(Try<? extends T> other);
 
     // =========================================================
     // State
     // =========================================================
 
+    /**
+     * Returns whether this try is a {@code Success}.
+     *
+     * @return {@code true} for {@code Success}, {@code false} for {@code Failure}
+     */
     boolean isSuccess();
 
+    /**
+     * Returns whether this try is a {@code Failure}.
+     *
+     * @return {@code true} for {@code Failure}, {@code false} for {@code Success}
+     */
     default boolean isFailure() {
         return !isSuccess();
     }
@@ -121,17 +189,26 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     // Conversion
     // =========================================================
 
+    /**
+     * Converts {@code Success(value)} to {@code Some(value)} and {@code Failure} to {@code None}.
+     *
+     * @return an option containing the success value, or {@code None}
+     */
     Option<T> toOption();
 
     /**
      * Converts {@code Success(value)} to {@code Right(value)} and
      * {@code Failure(throwable)} to {@code Left(throwable)}.
+     *
+     * @return an either containing the throwable or success value
      */
     Either<Throwable, T> toEither();
 
     /**
      * Converts {@code Success(value)} to a single-value {@code ImmutableList} and
      * {@code Failure} to an empty {@code ImmutableList}.
+     *
+     * @return an immutable list containing zero or one value
      */
     ImmutableList<T> toList();
 
@@ -161,6 +238,11 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
     // Implementation
     // =========================================================
 
+    /**
+     * A {@code Try} implementation containing a non-null success value.
+     *
+     * @param <T> the success value type
+     */
     final class Success<T> implements Try<T> {
 
         private final T value;
@@ -268,6 +350,11 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
         }
     }
 
+    /**
+     * A {@code Try} implementation containing a non-null throwable.
+     *
+     * @param <T> the success value type
+     */
     final class Failure<T> implements Try<T> {
 
         private final Throwable throwable;
