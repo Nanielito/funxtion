@@ -833,6 +833,53 @@ class ImmutableListTest {
     }
 
     @Nested
+    class FoldRight {
+
+        @Test
+        void shouldFailWhenFunctionIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .foldRight(0, null));
+        }
+
+        @Test
+        void shouldPropagateFunctionException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.foldRight(0, (a, b) -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnInitialValueWhenFoldingEmptyList() throws Throwable {
+            final int result = ImmutableList.<Integer>empty()
+                    .foldRight(0, Integer::sum);
+
+            assertEquals(0, result);
+        }
+
+        @Test
+        void shouldAllowNullInitialValue() throws Throwable {
+            final String result = ImmutableList.of(1, 2, 3)
+                    .foldRight(null, (value, acc) -> acc == null ? value.toString() : acc + value);
+
+            assertEquals("321", result);
+        }
+
+        @Test
+        void shouldFoldFromRight() throws Throwable {
+            final int result = ImmutableList.of(1, 2, 3)
+                    .foldRight(0, Integer::sum);
+
+            assertEquals(6, result);
+        }
+    }
+
+    @Nested
     class ScanLeft {
 
         @Test
@@ -992,6 +1039,61 @@ class ImmutableListTest {
         void shouldReduce() throws Throwable {
             final Option<Integer> result = ImmutableList.of(1, 2, 3)
                     .reduce(Integer::sum);
+
+            assertEquals(Option.some(6), result);
+        }
+    }
+
+    @Nested
+    class ReduceRight {
+
+        @Test
+        void shouldFailWhenFunctionIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .reduceRight(null));
+        }
+
+        @Test
+        void shouldFailWhenReduceToNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .reduceRight((left, right) -> null));
+        }
+
+        @Test
+        void shouldReturnNoneForEmptyList() throws Throwable {
+            final Option<Integer> result = ImmutableList.<Integer>empty()
+                    .reduceRight(Integer::sum);
+
+            assertSame(Option.none(), result);
+        }
+
+        @Test
+        void shouldPropagateFunctionException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.reduceRight((left, right) -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnSingleElementForSingleElementList() throws Throwable {
+            final Option<Integer> result = ImmutableList.of(1)
+                    .reduceRight(Integer::sum);
+
+            assertEquals(Option.some(1), result);
+        }
+
+        @Test
+        void shouldReduce() throws Throwable {
+            final Option<Integer> result = ImmutableList.of(1, 2, 3)
+                    .reduceRight(Integer::sum);
 
             assertEquals(Option.some(6), result);
         }
