@@ -55,3 +55,17 @@ Produce a concise PR title and body using the repository PR template:
 - Confirm the body reflects the diff, not only commit messages.
 - Confirm validation commands are current.
 - Mention migration or release notes only when relevant.
+
+## Local Helper
+
+Use the local summary helper to draft PR content:
+
+```bash
+./scripts/pr-summary.sh main
+```
+
+Pass a second argument to override the suggested title:
+
+```bash
+./scripts/pr-summary.sh main "chore: add development workflow helpers"
+```
