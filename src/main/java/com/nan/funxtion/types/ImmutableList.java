@@ -22,6 +22,8 @@ import com.nan.tuplex.Tuples;
  *
  * <p>Instances defensively copy incoming values and expose an unmodifiable
  * {@link List} through {@link #toList()}.
+ *
+ * @param <T> the type of values stored in the list
  */
 public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableList {
 
@@ -31,6 +33,9 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
 
     /**
      * Creates an empty immutable list.
+     *
+     * @param <T> the element type of the empty list
+     * @return an empty immutable list
      */
     static <T> ImmutableList<T> empty() {
         return new ArrayImmutableList<>(List.of());
@@ -39,6 +44,9 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Creates an immutable list from the provided values.
      *
+     * @param <T> the element type of the list
+     * @param values the values to copy into the list
+     * @return an immutable list containing the provided values
      * @throws NullPointerException if the array or any value is null
      */
     @SafeVarargs
@@ -50,6 +58,9 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Creates an immutable list from an iterable, making a defensive copy.
      *
+     * @param <T> the element type of the list
+     * @param iterable the values to copy into the list
+     * @return an immutable list containing the iterable values
      * @throws NullPointerException if the iterable or any value is null
      */
     static <T> ImmutableList<T> from(final Iterable<? extends T> iterable) {
@@ -64,26 +75,56 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     // Queries
     // =========================================================
 
+    /**
+     * Returns the number of values in this list.
+     *
+     * @return the list size
+     */
     int size();
 
+    /**
+     * Returns whether this list contains no values.
+     *
+     * @return {@code true} when this list is empty
+     */
     boolean isEmpty();
 
+    /**
+     * Returns whether this list contains at least one value.
+     *
+     * @return {@code true} when this list is not empty
+     */
     default boolean nonEmpty() {
         return !isEmpty();
     }
 
+    /**
+     * Returns the first value, if present.
+     *
+     * @return {@code Some} with the first value, or {@code None} when empty
+     */
     Option<T> head();
 
+    /**
+     * Returns the last value, if present.
+     *
+     * @return {@code Some} with the last value, or {@code None} when empty
+     */
     Option<T> last();
 
     /**
      * Returns {@code None} when the index is out of bounds.
+     *
+     * @param index the zero-based index to read
+     * @return {@code Some} with the value at {@code index}, or {@code None}
      */
     Option<T> get(int index);
 
     /**
      * Returns whether the non-null value is present.
      *
+     * @param value the non-null value to search for
+     * @return {@code true} when this list contains {@code value}
      * @throws NullPointerException if {@code value} is null
      */
     boolean contains(T value);
@@ -95,19 +136,32 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Maps each value, preserving order.
      *
+     * @param <R> the mapped value type
+     * @param mapper the function used to map each value
+     * @return an immutable list containing the mapped values
      * @throws NullPointerException if the mapper or any mapped value is null
+     * @throws Throwable if {@code mapper} throws
      */
     <R> ImmutableList<R> map(CheckedFunction<? super T, ? extends R> mapper) throws Throwable;
 
     /**
      * Keeps values that satisfy the predicate, preserving order.
+     *
+     * @param predicate the predicate used to test each value
+     * @return an immutable list containing only matching values
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
      */
     ImmutableList<T> filter(CheckedPredicate<? super T> predicate) throws Throwable;
 
     /**
      * Maps each value to an immutable list and concatenates the results.
      *
+     * @param <R> the mapped value type
+     * @param mapper the function used to map each value to an immutable list
+     * @return an immutable list containing the concatenated mapped values
      * @throws NullPointerException if the mapper or any mapped list is null
+     * @throws Throwable if {@code mapper} throws
      */
     <R> ImmutableList<R> flatMap(CheckedFunction<? super T, ? extends ImmutableList<? extends R>> mapper) throws Throwable;
 
@@ -115,6 +169,14 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     // Partitioning
     // =========================================================
 
+    /**
+     * Splits this list into matching and non-matching values, preserving order.
+     *
+     * @param predicate the predicate used to classify each value
+     * @return a tuple containing the matching values first and non-matching values second
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
+     */
     Tuple partition(CheckedPredicate<? super T> predicate) throws Throwable;
 
     // =========================================================
@@ -125,7 +187,11 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * Groups values by a non-null classifier result, preserving the order in
      * which group keys first appear.
      *
+     * @param <K> the group key type
+     * @param classifier the function used to compute each value's group key
+     * @return an unmodifiable map from group keys to immutable lists of grouped values
      * @throws NullPointerException if {@code classifier} or any classifier result is null
+     * @throws Throwable if {@code classifier} throws
      */
     <K> Map<K, ImmutableList<T>> groupBy(CheckedFunction<? super T, ? extends K> classifier) throws Throwable;
 
@@ -133,15 +199,44 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     // Search
     // =========================================================
 
+    /**
+     * Finds the first value that satisfies the predicate.
+     *
+     * @param predicate the predicate used to test each value
+     * @return {@code Some} with the first matching value, or {@code None}
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
+     */
     Option<T> find(CheckedPredicate<? super T> predicate) throws Throwable;
 
+    /**
+     * Returns whether at least one value satisfies the predicate.
+     *
+     * @param predicate the predicate used to test each value
+     * @return {@code true} when any value matches
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
+     */
     boolean any(CheckedPredicate<? super T> predicate) throws Throwable;
 
     /**
      * Returns true when every value matches, including for an empty list.
+     *
+     * @param predicate the predicate used to test each value
+     * @return {@code true} when every value matches
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
      */
     boolean all(CheckedPredicate<? super T> predicate) throws Throwable;
 
+    /**
+     * Returns whether no values satisfy the predicate.
+     *
+     * @param predicate the predicate used to test each value
+     * @return {@code true} when no value matches
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
+     */
     default boolean none(final CheckedPredicate<? super T> predicate) throws Throwable {
         return !any(predicate);
     }
@@ -149,7 +244,10 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Counts values that satisfy the predicate.
      *
+     * @param predicate the predicate used to test each value
+     * @return the number of matching values
      * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
      */
     int count(CheckedPredicate<? super T> predicate) throws Throwable;
 
@@ -159,11 +257,25 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
 
     /**
      * Folds from left to right. The initial accumulator may be null.
+     *
+     * @param <R> the accumulator and result type
+     * @param initial the initial accumulator value
+     * @param function the function used to combine the accumulator and each value
+     * @return the final accumulated value
+     * @throws NullPointerException if {@code function} is null
+     * @throws Throwable if {@code function} throws
      */
     <R> R foldLeft(R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable;
 
     /**
      * Folds from right to left. The initial accumulator may be null.
+     *
+     * @param <R> the accumulator and result type
+     * @param initial the initial accumulator value
+     * @param function the function used to combine each value and the accumulator
+     * @return the final accumulated value
+     * @throws NullPointerException if {@code function} is null
+     * @throws Throwable if {@code function} throws
      */
     <R> R foldRight(R initial, CheckedBiFunction<? super T, ? super R, ? extends R> function) throws Throwable;
 
@@ -171,7 +283,12 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * Folds from left to right, returning every intermediate accumulator including
      * the initial value.
      *
+     * @param <R> the accumulator and scanned value type
+     * @param initial the initial accumulator value
+     * @param function the function used to combine the accumulator and each value
+     * @return an immutable list containing the initial value and each intermediate accumulator
      * @throws NullPointerException if {@code initial}, {@code function}, or any intermediate accumulator value is null
+     * @throws Throwable if {@code function} throws
      */
     <R> ImmutableList<R> scanLeft(R initial, CheckedBiFunction<? super R, ? super T, ? extends R> function) throws Throwable;
 
@@ -179,7 +296,12 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * Folds from right to left, returning every intermediate accumulator including
      * the initial value.
      *
+     * @param <R> the accumulator and scanned value type
+     * @param initial the initial accumulator value
+     * @param function the function used to combine each value and the accumulator
+     * @return an immutable list containing each intermediate accumulator and the initial value
      * @throws NullPointerException if {@code initial}, {@code function}, or any accumulated value is null
+     * @throws Throwable if {@code function} throws
      */
     <R> ImmutableList<R> scanRight(R initial, CheckedBiFunction<? super T, ? super R, ? extends R> function) throws Throwable;
 
@@ -187,7 +309,10 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * Reduces this list from left to right, returning {@code None} for an
      * empty list.
      *
+     * @param function the function used to combine accumulated values
+     * @return {@code Some} with the final reduced value, or {@code None} when empty
      * @throws NullPointerException if the function is null or the final reduced value is null
+     * @throws Throwable if {@code function} throws
      */
     Option<T> reduce(CheckedBiFunction<? super T, ? super T, ? extends T> function) throws Throwable;
 
@@ -195,7 +320,10 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * Reduces this list from right to left, returning {@code None} for an
      * empty list.
      *
+     * @param function the function used to combine accumulated values
+     * @return {@code Some} with the final reduced value, or {@code None} when empty
      * @throws NullPointerException if the function is null or the final reduced value is null
+     * @throws Throwable if {@code function} throws
      */
     Option<T> reduceRight(CheckedBiFunction<? super T, ? super T, ? extends T> function) throws Throwable;
 
@@ -203,8 +331,20 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     // Slicing
     // =========================================================
 
+    /**
+     * Returns up to the first {@code count} values.
+     *
+     * @param count the maximum number of values to keep
+     * @return an immutable list containing the kept prefix
+     */
     ImmutableList<T> take(int count);
 
+    /**
+     * Drops up to the first {@code count} values.
+     *
+     * @param count the number of values to skip
+     * @return an immutable list containing the remaining suffix
+     */
     ImmutableList<T> drop(int count);
 
     // =========================================================
@@ -214,6 +354,8 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Returns a new list with {@code value} added at the end.
      *
+     * @param value the value to add
+     * @return a new immutable list ending with {@code value}
      * @throws NullPointerException if {@code value} is null
      */
     ImmutableList<T> append(T value);
@@ -221,6 +363,8 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Returns a new list with {@code value} added at the beginning.
      *
+     * @param value the value to add
+     * @return a new immutable list starting with {@code value}
      * @throws NullPointerException if {@code value} is null
      */
     ImmutableList<T> prepend(T value);
@@ -228,6 +372,8 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Returns a new list containing this list followed by {@code other}.
      *
+     * @param other the list to append after this list
+     * @return a new immutable list containing both lists in order
      * @throws NullPointerException if {@code other} is null
      */
     ImmutableList<T> concat(ImmutableList<? extends T> other);
@@ -235,6 +381,9 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Combines this list with {@code other} into tuples, stopping at the shortest list.
      *
+     * @param <U> the value type of the other list
+     * @param other the list to combine with this list
+     * @return an immutable list of tuples containing paired values
      * @throws NullPointerException if {@code other} is null
      */
     <U> ImmutableList<Tuple> zip(ImmutableList<? extends U> other);
@@ -242,7 +391,13 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     /**
      * Combines this list with {@code other} using {@code function}, stopping at the shortest list.
      *
+     * @param <U> the value type of the other list
+     * @param <R> the combined value type
+     * @param other the list to combine with this list
+     * @param function the function used to combine paired values
+     * @return an immutable list of combined values
      * @throws NullPointerException if {@code other}, {@code function}, or any combined value is null
+     * @throws Throwable if {@code function} throws
      */
     <U, R> ImmutableList<R> zipWith(ImmutableList<? extends U> other, CheckedBiFunction<? super T, ? super U, ? extends R> function) throws Throwable;
 
@@ -252,12 +407,16 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
 
     /**
      * Returns a new list with the values in reverse order.
+     *
+     * @return an immutable list with values in reverse order
      */
     ImmutableList<T> reverse();
 
     /**
      * Returns a new list sorted by the provided comparator.
      *
+     * @param comparator the comparator used to sort values
+     * @return an immutable list with sorted values
      * @throws NullPointerException if {@code comparator} is null
      */
     ImmutableList<T> sort(Comparator<? super T> comparator);
@@ -268,6 +427,8 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
 
     /**
      * Returns a new list with duplicate values removed, keeping first occurrences.
+     *
+     * @return an immutable list containing distinct values in first-occurrence order
      */
     ImmutableList<T> distinct();
 
@@ -277,17 +438,23 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
 
     /**
      * Returns an unmodifiable list view of this immutable list.
+     *
+     * @return an unmodifiable list containing this list's values
      */
     List<T> toList();
 
     /**
      * Returns a new array containing this list's values.
+     *
+     * @return an array containing this list's values
      */
     Object[] toArray();
 
     /**
      * Joins values into a string using the provided separator.
      *
+     * @param separator the separator placed between values
+     * @return the joined string
      * @throws NullPointerException if {@code separator} is null
      */
     String mkString(String separator);
@@ -296,6 +463,11 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     // Implementation
     // =========================================================
 
+    /**
+     * Default immutable list implementation backed by an unmodifiable list copy.
+     *
+     * @param <T> the type of values stored in the list
+     */
     final class ArrayImmutableList<T> implements ImmutableList<T> {
 
         private final List<T> values;
