@@ -44,10 +44,12 @@ fi
 
 printf "\n## Changes\n"
 changed_files="$(git diff --name-only "$base"...HEAD)"
-if [ -z "$changed_files" ]; then
+untracked_files="$(git ls-files --others --exclude-standard)"
+all_changed_files="$(printf "%s\n%s\n" "$changed_files" "$untracked_files" | sed '/^$/d' | sort -u)"
+if [ -z "$all_changed_files" ]; then
     printf -- '- No file changes detected against `%s`.\n' "$base"
 else
-    printf "%s\n" "$changed_files" | sed 's/^/- `/; s/$/`/'
+    printf "%s\n" "$all_changed_files" | sed 's/^/- `/; s/$/`/'
 fi
 
 printf "\n## Validation\n"
@@ -57,6 +59,13 @@ printf -- '- [ ] `./gradlew javadoc`\n'
 printf "\n## Notes\n"
 printf -- '- Base: `%s`\n' "$base"
 printf -- '- Branch: `%s`\n' "$branch"
+if [ -n "$untracked_files" ]; then
+    printf -- '- Includes untracked files from the working tree.\n'
+fi
 
 printf "\nDiff stat:\n\n"
 git diff --stat "$base"...HEAD || true
+if [ -n "$untracked_files" ]; then
+    printf "\nUntracked files:\n\n"
+    printf "%s\n" "$untracked_files"
+fi
