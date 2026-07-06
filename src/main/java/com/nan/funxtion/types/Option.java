@@ -11,6 +11,8 @@ import java.util.function.Supplier;
  * <p>{@code Some} always contains a non-null value, while {@code None}
  * represents absence. Transformations are only applied to {@code Some};
  * {@code None} skips them and remains empty.
+ *
+ * @param <T> the type of the optional value
  */
 public sealed interface Option<T> permits Option.Some, Option.None {
 
@@ -21,6 +23,9 @@ public sealed interface Option<T> permits Option.Some, Option.None {
     /**
      * Creates an {@code Option} containing a non-null value.
      *
+     * @param <T> the value type
+     * @param value the non-null value to wrap
+     * @return a {@code Some} containing {@code value}
      * @throws NullPointerException if {@code value} is null
      */
     static <T> Option<T> some(final T value) {
@@ -29,6 +34,9 @@ public sealed interface Option<T> permits Option.Some, Option.None {
 
     /**
      * Returns the singleton empty {@code Option}.
+     *
+     * @param <T> the value type
+     * @return the empty {@code Option}
      */
     @SuppressWarnings("unchecked")
     static <T> Option<T> none() {
@@ -37,6 +45,10 @@ public sealed interface Option<T> permits Option.Some, Option.None {
 
     /**
      * Converts a nullable value into {@code Some(value)} or {@code None}.
+     *
+     * @param <T> the value type
+     * @param value the nullable value to wrap
+     * @return {@code Some} when {@code value} is non-null, otherwise {@code None}
      */
     static <T> Option<T> ofNullable(final T value) {
         return value == null ? none() : some(value);
@@ -48,42 +60,103 @@ public sealed interface Option<T> permits Option.Some, Option.None {
 
     /**
      * Maps a present value and converts a null mapping result to {@code None}.
+     *
+     * @param <R> the mapped value type
+     * @param mapper the function used to map a present value
+     * @return {@code Some} with the mapped value, or {@code None}
+     * @throws NullPointerException if {@code mapper} is null
      */
     <R> Option<R> map(Function<? super T, ? extends R> mapper);
 
     /**
      * Maps a present value to another {@code Option}.
      *
-     * @throws NullPointerException if the mapper returns null
+     * @param <R> the mapped value type
+     * @param mapper the function used to map a present value
+     * @return the mapped option for {@code Some}, or {@code None}
+     * @throws NullPointerException if {@code mapper} or its result is null
      */
     <R> Option<R> flatMap(Function<? super T, ? extends Option<? extends R>> mapper);
 
+    /**
+     * Keeps a present value only when it satisfies the predicate.
+     *
+     * @param predicate the predicate used to test a present value
+     * @return this option when empty or matching, otherwise {@code None}
+     * @throws NullPointerException if {@code predicate} is null
+     */
     Option<T> filter(Predicate<? super T> predicate);
 
     // =========================================================
     // Folding
     // =========================================================
 
+    /**
+     * Folds this option by evaluating one branch for {@code None} and another for {@code Some}.
+     *
+     * @param <R> the folded result type
+     * @param ifEmpty the supplier used when this option is empty
+     * @param ifDefined the function used when this option contains a value
+     * @return the folded result
+     * @throws NullPointerException if {@code ifEmpty} or {@code ifDefined} is null
+     */
     <R> R fold(Supplier<? extends R> ifEmpty, Function<? super T, ? extends R> ifDefined);
 
     // =========================================================
     // Extraction
     // =========================================================
 
+    /**
+     * Returns the present value or the provided fallback.
+     *
+     * @param other the fallback value returned when this option is empty
+     * @return the present value, or {@code other}
+     */
     T getOrElse(T other);
 
+    /**
+     * Returns the present value or gets a fallback from the supplier.
+     *
+     * @param supplier the fallback supplier used when this option is empty
+     * @return the present value, or the supplied fallback
+     * @throws NullPointerException if this option is empty and {@code supplier} is null
+     */
     T getOrElseGet(Supplier<? extends T> supplier);
 
+    /**
+     * Returns this option when defined, otherwise returns {@code other}.
+     *
+     * @param other the fallback option used when this option is empty
+     * @return this option when defined, otherwise {@code other}
+     * @throws NullPointerException if {@code other} is null
+     */
     Option<T> orElse(Option<? extends T> other);
 
+    /**
+     * Returns this option when defined, otherwise gets a fallback option from the supplier.
+     *
+     * @param supplier the fallback option supplier used when this option is empty
+     * @return this option when defined, otherwise the supplied option
+     * @throws NullPointerException if {@code supplier} or its result is null
+     */
     Option<T> orElseGet(Supplier<? extends Option<? extends T>> supplier);
 
     // =========================================================
     // State
     // =========================================================
 
+    /**
+     * Returns whether this option contains a value.
+     *
+     * @return {@code true} for {@code Some}, {@code false} for {@code None}
+     */
     boolean isDefined();
 
+    /**
+     * Returns whether this option is empty.
+     *
+     * @return {@code true} for {@code None}, {@code false} for {@code Some}
+     */
     default boolean isEmpty() {
         return !isDefined();
     }
@@ -96,6 +169,9 @@ public sealed interface Option<T> permits Option.Some, Option.None {
      * Converts {@code Some(value)} to {@code Right(value)} and {@code None}
      * to {@code Left(leftSupplier.get())}.
      *
+     * @param <L> the left value type
+     * @param leftSupplier the supplier used to create the left value for {@code None}
+     * @return an {@code Either} representing this option
      * @throws NullPointerException if {@code leftSupplier} or its result is null
      */
     <L> Either<L, T> toEither(Supplier<? extends L> leftSupplier);
@@ -103,6 +179,8 @@ public sealed interface Option<T> permits Option.Some, Option.None {
     /**
      * Converts {@code Some(value)} to a single-value {@code ImmutableList} and
      * {@code None} to an empty {@code ImmutableList}.
+     *
+     * @return an immutable list containing zero or one value
      */
     ImmutableList<T> toList();
 
@@ -110,6 +188,8 @@ public sealed interface Option<T> permits Option.Some, Option.None {
      * Converts {@code Some(value)} to {@code Success(value)} and {@code None}
      * to {@code Failure(throwableSupplier.get())}.
      *
+     * @param throwableSupplier the supplier used to create the failure for {@code None}
+     * @return a {@code Try} representing this option
      * @throws NullPointerException if {@code throwableSupplier} or its result is null
      */
     Try<T> toTry(Supplier<? extends Throwable> throwableSupplier);
@@ -118,6 +198,11 @@ public sealed interface Option<T> permits Option.Some, Option.None {
     // Implementation
     // =========================================================
 
+    /**
+     * An {@code Option} implementation containing a non-null value.
+     *
+     * @param <T> the value type
+     */
     final class Some<T> implements Option<T> {
 
         private final T value;
@@ -213,6 +298,11 @@ public sealed interface Option<T> permits Option.Some, Option.None {
         }
     }
 
+    /**
+     * The empty {@code Option} implementation.
+     *
+     * @param <T> the value type
+     */
     final class None<T> implements Option<T> {
 
         private static final None<?> INSTANCE = new None<>();
