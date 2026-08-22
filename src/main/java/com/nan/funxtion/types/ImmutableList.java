@@ -129,6 +129,15 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      */
     boolean contains(T value);
 
+    /**
+     * Returns whether every value from {@code values} is present in this list.
+     *
+     * @param values the non-null values to search for
+     * @return {@code true} when all provided values are present
+     * @throws NullPointerException if {@code values} or any searched value is null
+     */
+    boolean containsAll(Iterable<? extends T> values);
+
     // =========================================================
     // Transformations
     // =========================================================
@@ -250,6 +259,24 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * @throws Throwable if {@code predicate} throws
      */
     int count(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    /**
+     * Finds the first index of {@code value}.
+     *
+     * @param value the non-null value to search for
+     * @return {@code Some} with the first index, or {@code None} when absent
+     * @throws NullPointerException if {@code value} is null
+     */
+    Option<Integer> indexOf(T value);
+
+    /**
+     * Finds the last index of {@code value}.
+     *
+     * @param value the non-null value to search for
+     * @return {@code Some} with the last index, or {@code None} when absent
+     * @throws NullPointerException if {@code value} is null
+     */
+    Option<Integer> lastIndexOf(T value);
 
     // =========================================================
     // Reduction
@@ -424,6 +451,15 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      */
     <U, R> ImmutableList<R> zipWith(ImmutableList<? extends U> other, CheckedBiFunction<? super T, ? super U, ? extends R> function) throws Throwable;
 
+    /**
+     * Inserts {@code separator} between each pair of values.
+     *
+     * @param separator the non-null value inserted between existing values
+     * @return an immutable list with separators inserted between values
+     * @throws NullPointerException if {@code separator} is null
+     */
+    ImmutableList<T> intersperse(T separator);
+
     // =========================================================
     // Ordering
     // =========================================================
@@ -443,6 +479,24 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      * @throws NullPointerException if {@code comparator} is null
      */
     ImmutableList<T> sort(Comparator<? super T> comparator);
+
+    /**
+     * Finds the minimum value according to the comparator.
+     *
+     * @param comparator the comparator used to compare values
+     * @return {@code Some} with the minimum value, or {@code None} when empty
+     * @throws NullPointerException if {@code comparator} is null
+     */
+    Option<T> min(Comparator<? super T> comparator);
+
+    /**
+     * Finds the maximum value according to the comparator.
+     *
+     * @param comparator the comparator used to compare values
+     * @return {@code Some} with the maximum value, or {@code None} when empty
+     * @throws NullPointerException if {@code comparator} is null
+     */
+    Option<T> max(Comparator<? super T> comparator);
 
     // =========================================================
     // Distinct
@@ -527,6 +581,17 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         @Override
         public boolean contains(final T value) {
             return values.contains(Objects.requireNonNull(value, "value must not be null"));
+        }
+
+        @Override
+        public boolean containsAll(final Iterable<? extends T> values) {
+            Objects.requireNonNull(values, "values must not be null");
+            for (final T value : values) {
+                Objects.requireNonNull(value, "values must not contain null values");
+                if (!this.values.contains(value))
+                    return false;
+            }
+            return true;
         }
 
         @Override
@@ -627,6 +692,20 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
                 if (predicate.test(value))
                     count++;
             return count;
+        }
+
+        @Override
+        public Option<Integer> indexOf(final T value) {
+            Objects.requireNonNull(value, "value must not be null");
+            final int index = values.indexOf(value);
+            return index < 0 ? Option.none() : Option.some(index);
+        }
+
+        @Override
+        public Option<Integer> lastIndexOf(final T value) {
+            Objects.requireNonNull(value, "value must not be null");
+            final int index = values.lastIndexOf(value);
+            return index < 0 ? Option.none() : Option.some(index);
         }
 
         @Override
@@ -794,6 +873,20 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         }
 
         @Override
+        public ImmutableList<T> intersperse(final T separator) {
+            Objects.requireNonNull(separator, "separator must not be null");
+            if (values.size() <= 1)
+                return this;
+            final List<T> interspersed = new ArrayList<>(values.size() * 2 - 1);
+            interspersed.add(values.get(0));
+            for (int i = 1; i < values.size(); i++) {
+                interspersed.add(separator);
+                interspersed.add(values.get(i));
+            }
+            return new ArrayImmutableList<>(interspersed);
+        }
+
+        @Override
         public ImmutableList<T> reverse() {
             if (values.size() <= 1)
                 return this;
@@ -810,6 +903,34 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             final List<T> sorted = new ArrayList<>(values);
             sorted.sort(comparator);
             return new ArrayImmutableList<>(sorted);
+        }
+
+        @Override
+        public Option<T> min(final Comparator<? super T> comparator) {
+            Objects.requireNonNull(comparator, "comparator must not be null");
+            if (values.isEmpty())
+                return Option.none();
+            T min = values.get(0);
+            for (int i = 1; i < values.size(); i++) {
+                final T value = values.get(i);
+                if (comparator.compare(value, min) < 0)
+                    min = value;
+            }
+            return Option.some(min);
+        }
+
+        @Override
+        public Option<T> max(final Comparator<? super T> comparator) {
+            Objects.requireNonNull(comparator, "comparator must not be null");
+            if (values.isEmpty())
+                return Option.none();
+            T max = values.get(0);
+            for (int i = 1; i < values.size(); i++) {
+                final T value = values.get(i);
+                if (comparator.compare(value, max) > 0)
+                    max = value;
+            }
+            return Option.some(max);
         }
 
         @Override
