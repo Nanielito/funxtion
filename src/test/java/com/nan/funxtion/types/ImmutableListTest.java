@@ -1,12 +1,15 @@
 package com.nan.funxtion.types;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -271,6 +274,68 @@ class ImmutableListTest {
             final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
 
             assertTrue(list.contains(2));
+        }
+    }
+
+    @Nested
+    class ContainsAll {
+
+        @Test
+        void shouldFailWhenIterableIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .containsAll(null));
+        }
+
+        @Test
+        void shouldFailWhenIterableContainsNullElement() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .containsAll(Arrays.asList(1, null)));
+        }
+
+        @Test
+        void shouldReturnFalseForEmptyList() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+
+            assertFalse(list.containsAll(List.of(1, 2, 3)));
+        }
+
+        @Test
+        void shouldReturnTrueForEmptyIterable() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertTrue(list.containsAll(List.of()));
+        }
+
+        @Test
+        void shouldReturnFalseWhenIterableDoesNotContainAllElements() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertFalse(list.containsAll(List.of(1, 2, 4)));
+        }
+
+        @Test
+        void shouldReturnTrueWhenIterableContainsAllElements() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertTrue(list.containsAll(List.of(2, 3)));
+        }
+
+        @Test
+        void shouldReturnTrueWhenIterableContainsAllElementsInDifferentOrder() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertTrue(list.containsAll(List.of(3, 2)));
+        }
+
+        @Test
+        void shouldReturnTrueWhenIterableContainsAllElementsAndHasDuplicates() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3, 2);
+
+            assertTrue(list.containsAll(List.of(3, 2, 2)));
         }
     }
 
@@ -782,6 +847,94 @@ class ImmutableListTest {
                     .count(v -> v % 2 == 0);
 
             assertEquals(2, result);
+        }
+    }
+
+    @Nested
+    class IndexOf {
+
+        @Test
+        void shouldFailWhenValueIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .indexOf(null));
+        }
+
+        @Test
+        void shouldReturnNoneWhenEmpty() {
+            final Option<Integer> result = ImmutableList.<Integer>empty()
+                    .indexOf(1);
+
+            assertSame(Option.none(), result);
+        }
+
+        @Test
+        void shouldReturnNoneWhenValueIsNotPresent() {
+            final Option<Integer> result = ImmutableList.of(1, 2, 3)
+                    .indexOf(4);
+
+            assertSame(Option.none(), result);
+        }
+
+        @Test
+        void shouldReturnIndexWhenValueIsPresent() {
+            final Option<Integer> result = ImmutableList.of(1, 2, 3, 4)
+                    .indexOf(3);
+
+            assertEquals(Option.some(2), result);
+        }
+
+        @Test
+        void shouldReturnFirstIndexWhenValueIsPresentMultipleTimes() {
+            final Option<Integer> result = ImmutableList.of(1, 2, 3, 4, 3)
+                    .indexOf(3);
+
+            assertEquals(Option.some(2), result);
+        }
+    }
+
+    @Nested
+    class LastIndexOf {
+
+        @Test
+        void shouldFailWhenValueIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .lastIndexOf(null));
+        }
+
+        @Test
+        void shouldReturnNoneWhenEmpty() {
+            final Option<Integer> result = ImmutableList.<Integer>empty()
+                    .lastIndexOf(1);
+
+            assertSame(Option.none(), result);
+        }
+
+        @Test
+        void shouldReturnNoneWhenValueIsNotPresent() {
+            final Option<Integer> result = ImmutableList.of(1, 2, 3)
+                    .lastIndexOf(4);
+
+            assertSame(Option.none(), result);
+        }
+
+        @Test
+        void shouldReturnIndexWhenValueIsPresent() {
+            final Option<Integer> result = ImmutableList.of(1, 2, 3, 4, 3)
+                    .lastIndexOf(3);
+
+            assertEquals(Option.some(4), result);
+        }
+
+        @Test
+        void shouldReturnLastIndexWhenValueIsPresentMultipleTimes() {
+            final Option<Integer> result = ImmutableList.of(1, 2, 3, 4, 3, 3)
+                    .lastIndexOf(3);
+
+            assertEquals(Option.some(5), result);
         }
     }
 
@@ -1547,6 +1700,44 @@ class ImmutableListTest {
     }
 
     @Nested
+    class Intersperse {
+
+        @Test
+        void shouldFailWhenSeparatorIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of("a", "b", "c")
+                            .intersperse(null));
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenThisListIsEmpty() {
+            final ImmutableList<String> result = ImmutableList.<String>empty()
+                    .intersperse("-");
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldReturnSingleListWhenListHasOneElement() {
+            final ImmutableList<String> list = ImmutableList.of("a");
+            final ImmutableList<String> result = list.intersperse("-");
+
+            assertEquals(List.of("a"), result.toList());
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnInterspersedList() {
+            final ImmutableList<String> list = ImmutableList.of("a", "b", "c");
+            final ImmutableList<String> result = list.intersperse("-");
+
+            assertEquals(List.of("a", "-", "b", "-", "c"), result.toList());
+            assertNotSame(list, result);
+        }
+    }
+
+    @Nested
     class Reverse {
 
         @Test
@@ -1625,6 +1816,100 @@ class ImmutableListTest {
 
             assertEquals(List.of(3, 2, 1), list.toList());
             assertEquals(List.of(1, 2, 3), result.toList());
+        }
+    }
+
+    @Nested
+    class Min {
+
+        @Test
+        void shouldFailWhenComparatorIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .min(null));
+        }
+
+        @Test
+        void shouldReturnNoneWhenEmpty() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final Option<Integer> result = list.min(Integer::compareTo);
+
+            assertEquals(Option.none(), result);
+        }
+
+        @Test
+        void shouldReturnValueWhenSingleElement() {
+            final ImmutableList<Integer> list = ImmutableList.of(1);
+            final Option<Integer> result = list.min(Integer::compareTo);
+
+            assertEquals(Option.some(1), result);
+        }
+
+        @Test
+        void shouldReturnMin() {
+            final ImmutableList<Integer> listA = ImmutableList.of(3, 2, 1);
+            final ImmutableList<Integer> listB = ImmutableList.of(1, 2, 3);
+            final Option<Integer> resultA = listA.min(Integer::compareTo);
+            final Option<Integer> resultB = listB.min(Integer::compareTo);
+
+            assertEquals(Option.some(1), resultA);
+            assertEquals(Option.some(1), resultB);
+        }
+
+        @Test
+        void shouldReturnMinWithCustomComparator() {
+            final ImmutableList<String> list = ImmutableList.of("hello", "welcome", "friend");
+            final Option<String> result = list.min(Comparator.comparingInt(String::length));
+
+            assertEquals(Option.some("hello"), result);
+        }
+    }
+
+    @Nested
+    class Max {
+
+        @Test
+        void shouldFailWhenComparatorIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .max(null));
+        }
+
+        @Test
+        void shouldReturnNoneWhenEmpty() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final Option<Integer> result = list.max(Integer::compareTo);
+
+            assertEquals(Option.none(), result);
+        }
+
+        @Test
+        void shouldReturnValueWhenSingleElement() {
+            final ImmutableList<Integer> list = ImmutableList.of(1);
+            final Option<Integer> result = list.max(Integer::compareTo);
+
+            assertEquals(Option.some(1), result);
+        }
+
+        @Test
+        void shouldReturnMax() {
+            final ImmutableList<Integer> listA = ImmutableList.of(3, 2, 1);
+            final ImmutableList<Integer> listB = ImmutableList.of(1, 2, 3);
+            final Option<Integer> resultA = listA.max(Integer::compareTo);
+            final Option<Integer> resultB = listB.max(Integer::compareTo);
+
+            assertEquals(Option.some(3), resultA);
+            assertEquals(Option.some(3), resultB);
+        }
+
+        @Test
+        void shouldReturnMaxWithCustomComparator() {
+            final ImmutableList<String> list = ImmutableList.of("hello", "welcome", "friend");
+            final Option<String> result = list.max(Comparator.comparingInt(String::length));
+
+            assertEquals(Option.some("welcome"), result);
         }
     }
 
