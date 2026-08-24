@@ -1,11 +1,11 @@
 package com.nan.funxtion.types;
 
-import com.nan.funxtion.types.functional.CheckedFunction;
-import com.nan.funxtion.types.functional.CheckedSupplier;
-
 import java.util.Objects;
 import java.util.function.Function;
 import java.util.function.Supplier;
+
+import com.nan.funxtion.types.functional.CheckedFunction;
+import com.nan.funxtion.types.functional.CheckedSupplier;
 
 /**
  * Represents the result of a computation that may either succeed with a
@@ -49,12 +49,13 @@ public sealed interface Try<T> permits Try.Success, Try.Failure {
 
     /**
      * Runs a checked supplier and captures non-fatal throwables as
-     * {@code Failure}.
+     * {@code Failure}. A null supplier result is captured as a
+     * {@code Failure(NullPointerException)}.
      *
      * @param <T> the success value type
      * @param supplier the supplier to run
      * @return {@code Success} with the supplied value, or {@code Failure} with a captured throwable
-     * @throws NullPointerException if {@code supplier} or its success result is null
+     * @throws NullPointerException if {@code supplier} is null
      */
     @SuppressWarnings("unchecked")
     static <T> Try<T> of(CheckedSupplier<? extends T> supplier) {
