@@ -2,6 +2,9 @@
 
 This directory documents repeatable agent workflows for this repository.
 
+Read `../AGENTS.md` first for repository-wide agent rules. This directory
+contains task-specific playbooks.
+
 The goal is to keep development work consistent from idea to release:
 
 ```text

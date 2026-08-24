@@ -100,6 +100,8 @@ Before requesting review, confirm:
 
 ## Agent Guides
 
+Repository-wide agent guidance lives in `AGENTS.md`.
+
 Reusable development guides live in `.agents/`:
 
 - `.agents/feature-planner.md` for feature planning.
