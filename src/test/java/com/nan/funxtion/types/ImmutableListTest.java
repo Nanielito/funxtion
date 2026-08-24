@@ -2271,6 +2271,102 @@ class ImmutableListTest {
     }
 
     @Nested
+    class ToMap {
+
+        @Test
+        void shouldFailWhenKeyMapperIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .toMap(null, String::valueOf));
+        }
+
+        @Test
+        void shouldFailWhenValueMapperIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .toMap(String::valueOf, null));
+        }
+
+        @Test
+        void shouldFailWhenKeyMapperReturnsNull() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertThrows(
+                    NullPointerException.class,
+                    () -> list.toMap(v -> null, String::valueOf));
+        }
+
+        @Test
+        void shouldFailWhenValueMapperReturnsNull() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertThrows(
+                    NullPointerException.class,
+                    () -> list.toMap(String::valueOf, v -> null));
+        }
+
+        @Test
+        void shouldPropagateKeyMapperException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.toMap(v -> { throw ex; }, String::valueOf));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldPropagateValueMapperException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.toMap(String::valueOf, v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnEmptyMapForEmptyList() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final java.util.Map<String, Integer> result = list.toMap(String::valueOf, v -> v * 10);
+
+            assertEquals(java.util.Map.of(), result);
+        }
+
+        @Test
+        void shouldReturnMapPreservingFirstKeyOccurrenceOrder() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(3, 1, 2);
+            final java.util.Map<String, Integer> result = list.toMap(String::valueOf, v -> v * 10);
+
+            assertEquals(List.of("3", "1", "2"), new ArrayList<>(result.keySet()));
+            assertEquals(List.of(30, 10, 20), new ArrayList<>(result.values()));
+        }
+
+        @Test
+        void shouldReplaceValueWhenKeyIsDuplicated() throws Throwable {
+            final ImmutableList<String> list = ImmutableList.of("a", "bb", "aa");
+            final java.util.Map<Character, Integer> result = list.toMap(value -> value.charAt(0), String::length);
+
+            assertEquals(List.of('a', 'b'), new ArrayList<>(result.keySet()));
+            assertEquals(List.of(2, 2), new ArrayList<>(result.values()));
+        }
+
+        @Test
+        void shouldReturnUnmodifiableMap() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final java.util.Map<String, Integer> result = list.toMap(String::valueOf, v -> v);
+
+            assertThrows(
+                    UnsupportedOperationException.class,
+                    () -> result.put("4", 4));
+        }
+    }
+
+    @Nested
     class ToArray {
 
         @Test
