@@ -2217,6 +2217,36 @@ class ImmutableListTest {
     }
 
     @Nested
+    class Stream {
+
+        @Test
+        void shouldReturnEmptyStreamForEmptyList() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final List<Integer> result = list.stream().toList();
+
+            assertEquals(List.of(), result);
+        }
+
+        @Test
+        void shouldStreamValuesInOrder() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final List<String> result = list.stream()
+                    .map(value -> "value-" + value)
+                    .toList();
+
+            assertEquals(List.of("value-1", "value-2", "value-3"), result);
+        }
+
+        @Test
+        void shouldReturnNewStreamForEachCall() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertEquals(List.of(1, 2, 3), list.stream().toList());
+            assertEquals(List.of(1, 2, 3), list.stream().toList());
+        }
+    }
+
+    @Nested
     class MkString {
 
         @Test
