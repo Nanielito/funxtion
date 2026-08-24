@@ -18,12 +18,14 @@ permissions:
   packages: write
 
 jobs:
-  release:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.bump.outputs.newVersion }}
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
 
@@ -31,6 +33,33 @@ jobs:
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
+
+      - name: Setup Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Validate publishing secrets
+        run: |
+          if [ -z "$GITHUB_PACKAGES_TOKEN" ]; then
+            echo "GH_PACKAGES_TOKEN secret is required to publish to nanielito/maven-packages."
+            echo "Create a classic PAT with write:packages access and store it as a repository secret."
+            exit 1
+          fi
+          for name in MAVEN_CENTRAL_USERNAME MAVEN_CENTRAL_PASSWORD SIGNING_KEY SIGNING_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "$name secret is required to publish to Maven Central."
+              exit 1
+            fi
+          done
+        env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
 
       - name: Install git-cliff
         uses: taiki-e/install-action@v2
@@ -67,23 +96,81 @@ jobs:
         run: |
           git-cliff --tag v${{ steps.bump.outputs.newVersion }} > CHANGELOG.md
 
-      - name: Commit version + tag
+      - name: Set release version
         run: |
           NEW_VERSION=${{ steps.bump.outputs.newVersion }}
           sed -i "s/^version=.*/version=$NEW_VERSION/" gradle.properties
+
+      - name: Validate release
+        run: ./gradlew clean build nmcpCheckAggregationFiles -PbuildJavaVersion=21
+        env:
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+      - name: Commit version + tag
+        run: |
+          NEW_VERSION=${{ steps.bump.outputs.newVersion }}
           git add gradle.properties CHANGELOG.md
           git commit -m "chore: bump version to $NEW_VERSION"
-          git tag "v$NEW_VERSION"
-          git push origin HEAD:${{ github.ref_name }} --follow-tags
+          git tag -a "v$NEW_VERSION" -m "v$NEW_VERSION"
+          git push --follow-tags
 
-      - name: Publish to GitHub Packages
-        run: ./gradlew publish
+  publish-github-packages:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.prepare.outputs.version }}
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - run: ./gradlew publishMavenJavaPublicationToGitHubPackagesRepository -PbuildJavaVersion=21
         env:
+          GITHUB_PACKAGES_TOKEN: ${{ secrets.GH_PACKAGES_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+  publish-maven-central:
+    needs: prepare
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.prepare.outputs.version }}
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - run: ./gradlew publishAggregationToCentralPortal -PbuildJavaVersion=21
+        env:
+          MAVEN_CENTRAL_USERNAME: ${{ secrets.MAVEN_CENTRAL_USERNAME }}
+          MAVEN_CENTRAL_PASSWORD: ${{ secrets.MAVEN_CENTRAL_PASSWORD }}
+          SIGNING_KEY: ${{ secrets.SIGNING_KEY }}
+          SIGNING_PASSWORD: ${{ secrets.SIGNING_PASSWORD }}
+
+  release:
+    needs: [prepare, publish-github-packages, publish-maven-central]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: v${{ needs.prepare.outputs.version }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.bump.outputs.newVersion }}
-          name: v${{ steps.bump.outputs.newVersion }}
+          tag_name: v${{ needs.prepare.outputs.version }}
+          name: v${{ needs.prepare.outputs.version }}
           body_path: CHANGELOG.md

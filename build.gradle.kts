@@ -8,7 +8,7 @@ plugins {
     id("signing")
 }
 
-group = "com.nan"
+group = "io.github.nanielito"
 version = project.property("version") as String
 val buildJavaVersion = providers.gradleProperty("buildJavaVersion")
     .map(String::toInt)
@@ -29,25 +29,18 @@ tasks.withType<JavaCompile>().configureEach {
     options.release.set(21)
 }
 
-repositories {
-    mavenCentral()
-    maven {
-        name = "GitHubPackages"
-        url = uri("https://maven.pkg.github.com/nanielito/maven-packages")
-        credentials {
-            username = environmentVariableOrNull("GITHUB_PACKAGES_USER")
-                ?: environmentVariableOrNull("GITHUB_ACTOR")
-            password = environmentVariableOrNull("GITHUB_PACKAGES_TOKEN")
-                ?: environmentVariableOrNull("GITHUB_TOKEN")
-        }
-        content {
-            includeGroup("com.nan")
-        }
+tasks.named<Jar>("jar") {
+    outputs.upToDateWhen {
+        archiveFile.get().asFile.exists()
     }
 }
 
+repositories {
+    mavenCentral()
+}
+
 dependencies {
-    implementation("com.nan:tuplex:1.0.0")
+    implementation("io.github.nanielito:tuplex:1.0.0")
 
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
@@ -111,11 +104,21 @@ publishing {
     repositories {
         maven {
             name = "GitHubPackages"
-            url = uri("https://maven.pkg.github.com/nanielito/funxtion")
+            url = uri("https://maven.pkg.github.com/nanielito/maven-packages")
             credentials {
-                username = System.getenv("GITHUB_ACTOR")
-                password = System.getenv("GITHUB_TOKEN")
+                username = environmentVariableOrNull("GITHUB_PACKAGES_USER")
+                    ?: environmentVariableOrNull("GITHUB_ACTOR")
+                password = environmentVariableOrNull("GITHUB_PACKAGES_TOKEN")
+                    ?: environmentVariableOrNull("GITHUB_TOKEN")
             }
         }
+    }
+}
+
+signing {
+    val key = environmentVariableOrNull("SIGNING_KEY")
+    if (key != null) {
+        useInMemoryPgpKeys(key, environmentVariableOrNull("SIGNING_PASSWORD"))
+        sign(publishing.publications["mavenJava"])
     }
 }
