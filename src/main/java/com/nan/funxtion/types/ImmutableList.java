@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.nan.funxtion.types.functional.CheckedBiFunction;
 import com.nan.funxtion.types.functional.CheckedFunction;
@@ -569,6 +570,13 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     Object[] toArray();
 
     /**
+     * Returns a sequential stream over this list's values in order.
+     *
+     * @return a sequential stream containing this list's values
+     */
+    Stream<T> stream();
+
+    /**
      * Joins values into a string using the provided separator.
      *
      * @param separator the separator placed between values
@@ -1042,6 +1050,11 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         @Override
         public Object[] toArray() {
             return values.toArray();
+        }
+
+        @Override
+        public Stream<T> stream() {
+            return values.stream();
         }
 
         @Override
