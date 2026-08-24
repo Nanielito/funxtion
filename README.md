@@ -18,26 +18,20 @@ operations such as `ImmutableList.partition(...)`.
 
 ## Installation
 
-Gradle:
+Artifacts are published to Maven Central and mirrored to GitHub Packages.
 
 ```kotlin
 repositories {
     mavenCentral()
-    maven {
-        url = uri("https://maven.pkg.github.com/nanielito/funxtion")
-    }
-    maven {
-        url = uri("https://maven.pkg.github.com/nanielito/maven-packages")
-    }
 }
 
 dependencies {
-    implementation("com.nan:funxtion:0.2.0")
+    implementation("io.github.nanielito:funxtion:0.2.0")
 }
 ```
 
-Funxtion depends on `com.nan:tuplex` for tuple-backed operations. GitHub
-Packages may require credentials depending on your environment.
+The same coordinates are available from the `nanielito/maven-packages` GitHub
+Packages registry for authenticated GitHub users.
 
 ## Build And Test
 
