@@ -164,6 +164,17 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     ImmutableList<T> filter(CheckedPredicate<? super T> predicate) throws Throwable;
 
     /**
+     * Maps each value to an option and keeps only defined results, preserving order.
+     *
+     * @param <R> the collected value type
+     * @param collector the function used to map each value to an option
+     * @return an immutable list containing the defined collected values
+     * @throws NullPointerException if {@code collector} or any collected option is null
+     * @throws Throwable if {@code collector} throws
+     */
+    <R> ImmutableList<R> collect(CheckedFunction<? super T, ? extends Option<? extends R>> collector) throws Throwable;
+
+    /**
      * Maps each value to an immutable list and concatenates the results.
      *
      * @param <R> the mapped value type
@@ -641,6 +652,23 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
                 if (predicate.test(value))
                     filtered.add(value);
             return new ArrayImmutableList<>(filtered);
+        }
+
+        @Override
+        public <R> ImmutableList<R> collect(final CheckedFunction<? super T, ? extends Option<? extends R>> collector) throws Throwable {
+            Objects.requireNonNull(collector, "collector must not be null");
+            final List<R> collected = new ArrayList<>();
+            for (final T value : values) {
+                final Option<? extends R> option = Objects.requireNonNull(
+                        collector.apply(value), "collector must not return null");
+                option.fold(
+                        () -> null,
+                        collectedValue -> {
+                            collected.add(collectedValue);
+                            return null;
+                        });
+            }
+            return new ArrayImmutableList<>(collected);
         }
 
         @Override

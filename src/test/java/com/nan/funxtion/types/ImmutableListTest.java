@@ -435,6 +435,64 @@ class ImmutableListTest {
     }
 
     @Nested
+    class Collect {
+
+        @Test
+        void shouldFailWhenCollectorIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .collect(null));
+        }
+
+        @Test
+        void shouldRejectNullCollectedOption() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+
+            assertThrows(
+                    NullPointerException.class,
+                    () -> list.collect(v -> null));
+        }
+
+        @Test
+        void shouldPropagateCollectorException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.collect(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenCollectingEmptyList() throws Throwable {
+            final ImmutableList<String> result = ImmutableList.<Integer>empty()
+                    .collect(v -> Option.some("value-" + v));
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenCollectorReturnsNone() throws Throwable {
+            final ImmutableList<String> result = ImmutableList.of(1, 2, 3)
+                    .collect(v -> Option.none());
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldCollectDefinedValuesPreservingOrder() throws Throwable {
+            final ImmutableList<String> result = ImmutableList.of(1, 2, 3, 4)
+                    .collect(v -> v % 2 == 0
+                            ? Option.some("even-" + v)
+                            : Option.none());
+
+            assertEquals(List.of("even-2", "even-4"), result.toList());
+        }
+    }
+
+    @Nested
     class FlatMap {
 
         @Test
