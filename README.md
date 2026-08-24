@@ -48,8 +48,8 @@ Build artifacts:
 
 ## Contributing
 
-Development workflow, branch conventions, validation, and pull request guidance
-are documented in [CONTRIBUTING.md](CONTRIBUTING.md).
+Open an issue before proposing a change, then send a pull request following
+the workflow in [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Examples
 
@@ -134,6 +134,7 @@ Transformations preserve order and return new immutable lists:
 
 ```java
 import com.nan.funxtion.types.ImmutableList;
+import com.nan.funxtion.types.Option;
 
 ImmutableList<Integer> doubled = ImmutableList.of(1, 2, 3)
         .map(value -> value * 2);
@@ -143,10 +144,16 @@ ImmutableList<Integer> evens = ImmutableList.of(1, 2, 3, 4)
 
 ImmutableList<Integer> expanded = ImmutableList.of(1, 2, 3)
         .flatMap(value -> ImmutableList.of(value, value * 10));
+
+ImmutableList<String> evenLabels = ImmutableList.of(1, 2, 3, 4)
+        .collect(value -> value % 2 == 0
+                ? Option.some("even-" + value)
+                : Option.none());
 ```
 
 Partitioning returns a two-value tuple where position `1` contains matching
-values and position `2` contains non-matching values:
+values and position `2` contains non-matching values. Prefix splitting follows
+the same tuple convention:
 
 ```java
 import com.nan.funxtion.types.ImmutableList;
@@ -157,6 +164,12 @@ Tuple partition = ImmutableList.of(1, 2, 3, 4)
 
 Object even = partition.get(1); // ImmutableList([2, 4])
 Object odd = partition.get(2);  // ImmutableList([1, 3])
+
+Tuple span = ImmutableList.of(1, 2, 3, 1)
+        .span(value -> value < 3);
+
+Object prefix = span.get(1); // ImmutableList([1, 2])
+Object suffix = span.get(2); // ImmutableList([3, 1])
 ```
 
 Grouping returns an unmodifiable map and preserves the order in which keys first
@@ -188,6 +201,18 @@ Option<Integer> reduced = ImmutableList.of(1, 2, 3)
 
 ImmutableList<Integer> scanned = ImmutableList.of(1, 2, 3)
         .scanLeft(0, Integer::sum);                // ImmutableList([0, 1, 3, 6])
+```
+
+Slicing can use counts or predicates:
+
+```java
+import com.nan.funxtion.types.ImmutableList;
+
+ImmutableList<Integer> prefix = ImmutableList.of(1, 2, 3, 1)
+        .takeWhile(value -> value < 3); // ImmutableList([1, 2])
+
+ImmutableList<Integer> suffix = ImmutableList.of(1, 2, 3, 1)
+        .dropWhile(value -> value < 3); // ImmutableList([3, 1])
 ```
 
 Combination and window operations cover zipping, separators, and fixed-size
@@ -225,6 +250,23 @@ Option<Integer> min = sorted.min(Integer::compareTo); // Some(1)
 Option<Integer> max = sorted.max(Integer::compareTo); // Some(3)
 ```
 
+For Java interoperability and effectful checked callbacks:
+
+```java
+import com.nan.funxtion.types.ImmutableList;
+
+import java.util.List;
+
+List<String> labels = ImmutableList.of(1, 2, 3)
+        .stream()
+        .map(value -> "value-" + value)
+        .toList();
+
+StringBuilder builder = new StringBuilder();
+ImmutableList.of("a", "b", "c")
+        .forEach(builder::append);
+```
+
 ### Checked Functions
 
 ```java
@@ -241,13 +283,21 @@ allowing checked or unchecked exceptions to be thrown.
 
 ## Publishing
 
-The Gradle build is configured for Maven publication and GitHub Packages. A
-remote repository and credentials are not required for local development.
+The Gradle build is configured for Maven publication. Local development does
+not require publishing credentials.
 
-When publishing is configured, credentials are read from:
+The release workflow publishes each tagged release to:
 
-- `GITHUB_ACTOR`
-- `GITHUB_TOKEN`
+- Maven Central
+- GitHub Packages under `nanielito/maven-packages`
+
+Publishing credentials are read from repository secrets:
+
+- `MAVEN_CENTRAL_USERNAME`
+- `MAVEN_CENTRAL_PASSWORD`
+- `GH_PACKAGES_TOKEN`
+- `SIGNING_KEY`
+- `SIGNING_PASSWORD`
 
 ## License
 
