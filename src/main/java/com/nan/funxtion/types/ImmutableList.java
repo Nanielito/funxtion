@@ -586,6 +586,24 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     Set<T> toSet();
 
     /**
+     * Returns an unmodifiable map built from this list's values.
+     *
+     * <p>Keys keep their first-occurrence order. When a key appears more than
+     * once, the last mapped value replaces the previous value.
+     *
+     * @param <K> the mapped key type
+     * @param <V> the mapped value type
+     * @param keyMapper the function used to map each value to a key
+     * @param valueMapper the function used to map each value to a map value
+     * @return an unmodifiable map containing mapped keys and values
+     * @throws NullPointerException if either mapper, any mapped key, or any mapped value is null
+     * @throws Throwable if either mapper throws
+     */
+    <K, V> Map<K, V> toMap(
+            CheckedFunction<? super T, ? extends K> keyMapper,
+            CheckedFunction<? super T, ? extends V> valueMapper) throws Throwable;
+
+    /**
      * Returns a new array containing this list's values.
      *
      * @return an array containing this list's values
@@ -1080,6 +1098,21 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         @Override
         public Set<T> toSet() {
             return Collections.unmodifiableSet(new LinkedHashSet<>(values));
+        }
+
+        @Override
+        public <K, V> Map<K, V> toMap(
+                final CheckedFunction<? super T, ? extends K> keyMapper,
+                final CheckedFunction<? super T, ? extends V> valueMapper) throws Throwable {
+            Objects.requireNonNull(keyMapper, "keyMapper must not be null");
+            Objects.requireNonNull(valueMapper, "valueMapper must not be null");
+            final Map<K, V> mapped = new LinkedHashMap<>();
+            for (final T value : values) {
+                final K key = Objects.requireNonNull(keyMapper.apply(value), "keyMapper must not return null");
+                final V mappedValue = Objects.requireNonNull(valueMapper.apply(value), "valueMapper must not return null");
+                mapped.put(key, mappedValue);
+            }
+            return Collections.unmodifiableMap(mapped);
         }
 
         @Override
