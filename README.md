@@ -256,16 +256,28 @@ For Java interoperability and effectful checked callbacks:
 import com.nan.funxtion.types.ImmutableList;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 List<String> labels = ImmutableList.of(1, 2, 3)
         .stream()
         .map(value -> "value-" + value)
         .toList();
 
+Set<Integer> unique = ImmutableList.of(1, 2, 2, 3)
+        .toSet();
+
+Map<String, Integer> lengths = ImmutableList.of("a", "bb", "aa")
+        .toMap(value -> value.substring(0, 1), String::length);
+
 StringBuilder builder = new StringBuilder();
 ImmutableList.of("a", "b", "c")
         .forEach(builder::append);
 ```
+
+`toSet()` and `toMap(...)` return unmodifiable collections. Both preserve
+first-occurrence order; duplicated map keys keep their first position and use
+the last mapped value.
 
 ### Checked Functions
 
