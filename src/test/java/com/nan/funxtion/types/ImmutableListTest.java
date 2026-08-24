@@ -1341,6 +1341,175 @@ class ImmutableListTest {
     }
 
     @Nested
+    class TakeWhile {
+
+        @Test
+        void shouldFailWhenPredicateIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .takeWhile(null));
+        }
+
+        @Test
+        void shouldPropagatePredicateException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.takeWhile(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenThisListIsEmpty() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.<Integer>empty()
+                    .takeWhile(v -> v < 3);
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenFirstValueDoesNotMatch() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .takeWhile(v -> v < 1);
+
+            assertEquals(List.of(), result.toList());
+        }
+
+        @Test
+        void shouldReturnPrefixWhileValuesMatch() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3, 1)
+                    .takeWhile(v -> v < 3);
+
+            assertEquals(List.of(1, 2), result.toList());
+        }
+
+        @Test
+        void shouldReturnSameListWhenAllValuesMatch() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> result = list.takeWhile(v -> v < 10);
+
+            assertSame(list, result);
+        }
+    }
+
+    @Nested
+    class DropWhile {
+
+        @Test
+        void shouldFailWhenPredicateIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .dropWhile(null));
+        }
+
+        @Test
+        void shouldPropagatePredicateException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.dropWhile(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldReturnSameListWhenThisListIsEmpty() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> result = list.dropWhile(v -> v < 3);
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnSameListWhenFirstValueDoesNotMatch() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> result = list.dropWhile(v -> v < 1);
+
+            assertSame(list, result);
+        }
+
+        @Test
+        void shouldReturnSuffixAfterMatchingPrefix() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3, 1)
+                    .dropWhile(v -> v < 3);
+
+            assertEquals(List.of(3, 1), result.toList());
+        }
+
+        @Test
+        void shouldReturnEmptyListWhenAllValuesMatch() throws Throwable {
+            final ImmutableList<Integer> result = ImmutableList.of(1, 2, 3)
+                    .dropWhile(v -> v < 10);
+
+            assertEquals(List.of(), result.toList());
+        }
+    }
+
+    @Nested
+    class Span {
+
+        @Test
+        void shouldFailWhenPredicateIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .span(null));
+        }
+
+        @Test
+        void shouldPropagatePredicateException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.span(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldSplitEmptyList() throws Throwable {
+            final Tuple result = ImmutableList.<Integer>empty()
+                    .span(v -> v < 3);
+
+            assertEquals(ImmutableList.empty(), result.get(1));
+            assertEquals(ImmutableList.empty(), result.get(2));
+        }
+
+        @Test
+        void shouldPutAllValuesInSuffixWhenFirstValueDoesNotMatch() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final Tuple result = list.span(v -> v < 1);
+
+            assertEquals(ImmutableList.empty(), result.get(1));
+            assertSame(list, result.get(2));
+        }
+
+        @Test
+        void shouldSplitMatchingPrefixAndRemainingSuffix() throws Throwable {
+            final Tuple result = ImmutableList.of(1, 2, 3, 1)
+                    .span(v -> v < 3);
+
+            assertEquals(ImmutableList.of(1, 2), result.get(1));
+            assertEquals(ImmutableList.of(3, 1), result.get(2));
+        }
+
+        @Test
+        void shouldPutAllValuesInPrefixWhenAllValuesMatch() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final Tuple result = list.span(v -> v < 10);
+
+            assertSame(list, result.get(1));
+            assertEquals(ImmutableList.empty(), result.get(2));
+        }
+    }
+
+    @Nested
     class Sliding {
 
         @Test
