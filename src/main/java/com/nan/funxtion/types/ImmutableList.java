@@ -374,6 +374,36 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
      */
     ImmutableList<T> drop(int count);
 
+    /**
+     * Returns the longest prefix whose values satisfy the predicate.
+     *
+     * @param predicate the predicate used to test each value
+     * @return an immutable list containing the matching prefix
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
+     */
+    ImmutableList<T> takeWhile(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    /**
+     * Drops the longest prefix whose values satisfy the predicate.
+     *
+     * @param predicate the predicate used to test each value
+     * @return an immutable list containing the remaining suffix
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
+     */
+    ImmutableList<T> dropWhile(CheckedPredicate<? super T> predicate) throws Throwable;
+
+    /**
+     * Splits this list into the longest matching prefix and the remaining suffix.
+     *
+     * @param predicate the predicate used to test each value
+     * @return a tuple containing the matching prefix first and remaining suffix second
+     * @throws NullPointerException if {@code predicate} is null
+     * @throws Throwable if {@code predicate} throws
+     */
+    Tuple span(CheckedPredicate<? super T> predicate) throws Throwable;
+
     // =========================================================
     // Windows
     // =========================================================
@@ -796,6 +826,39 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             if (count >= values.size())
                 return ImmutableList.empty();
             return new ArrayImmutableList<>(values.subList(count, values.size()));
+        }
+
+        @Override
+        public ImmutableList<T> takeWhile(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            for (int i = 0; i < values.size(); i++)
+                if (!predicate.test(values.get(i)))
+                    return i == 0 ? ImmutableList.empty() : new ArrayImmutableList<>(values.subList(0, i));
+            return this;
+        }
+
+        @Override
+        public ImmutableList<T> dropWhile(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            if (values.isEmpty())
+                return this;
+            for (int i = 0; i < values.size(); i++)
+                if (!predicate.test(values.get(i)))
+                    return i == 0 ? this : new ArrayImmutableList<>(values.subList(i, values.size()));
+            return ImmutableList.empty();
+        }
+
+        @Override
+        public Tuple span(final CheckedPredicate<? super T> predicate) throws Throwable {
+            Objects.requireNonNull(predicate, "predicate must not be null");
+            for (int i = 0; i < values.size(); i++) {
+                if (!predicate.test(values.get(i))) {
+                    final ImmutableList<T> prefix = i == 0 ? ImmutableList.empty() : new ArrayImmutableList<>(values.subList(0, i));
+                    final ImmutableList<T> suffix = i == 0 ? this : new ArrayImmutableList<>(values.subList(i, values.size()));
+                    return Tuples.of(prefix, suffix);
+                }
+            }
+            return Tuples.of(this, ImmutableList.empty());
         }
 
         @Override
