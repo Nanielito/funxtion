@@ -8,6 +8,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -577,6 +578,14 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     List<T> toList();
 
     /**
+     * Returns an unmodifiable set containing this list's distinct values in
+     * first-occurrence order.
+     *
+     * @return an unmodifiable set containing this list's distinct values
+     */
+    Set<T> toSet();
+
+    /**
      * Returns a new array containing this list's values.
      *
      * @return an array containing this list's values
@@ -1066,6 +1075,11 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
         @Override
         public List<T> toList() {
             return values;
+        }
+
+        @Override
+        public Set<T> toSet() {
+            return Collections.unmodifiableSet(new LinkedHashSet<>(values));
         }
 
         @Override
