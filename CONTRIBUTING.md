@@ -7,7 +7,7 @@ branches, Conventional Commits, and repeatable validation.
 
 ## Development Flow
 
-1. Start from an issue or clear task.
+1. Start from a GitHub issue. Maintainers may also use an internal clear task.
 2. Create a focused branch.
 3. Make the smallest coherent change.
 4. Add or update tests and JavaDoc when behavior or public API changes.
@@ -128,3 +128,6 @@ Release notes and changelog generation follow `cliff.toml`.
 
 Commits should remain Conventional Commit compatible so generated changelogs can
 group changes correctly.
+
+Releases are handled by project maintainers. Contributors should focus on
+issues and pull requests; maintainers decide when to publish a new version.
