@@ -2177,6 +2177,49 @@ class ImmutableListTest {
     }
 
     @Nested
+    class ForEach {
+
+        @Test
+        void shouldFailWhenConsumerIsNull() {
+            assertThrows(
+                    NullPointerException.class,
+                    () -> ImmutableList.of(1, 2, 3)
+                            .forEach(null));
+        }
+
+        @Test
+        void shouldPropagateConsumerException() {
+            final RuntimeException ex = new RuntimeException("boom");
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final RuntimeException thrown = assertThrows(
+                    RuntimeException.class,
+                    () -> list.forEach(v -> { throw ex; }));
+
+            assertSame(ex, thrown);
+        }
+
+        @Test
+        void shouldNotRunConsumerWhenListIsEmpty() throws Throwable {
+            final List<Integer> visited = new ArrayList<>();
+
+            ImmutableList.<Integer>empty()
+                    .forEach(visited::add);
+
+            assertEquals(List.of(), visited);
+        }
+
+        @Test
+        void shouldRunConsumerForEachValueInOrder() throws Throwable {
+            final List<Integer> visited = new ArrayList<>();
+
+            ImmutableList.of(1, 2, 3)
+                    .forEach(visited::add);
+
+            assertEquals(List.of(1, 2, 3), visited);
+        }
+    }
+
+    @Nested
     class ToList {
 
         @Test

@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.nan.funxtion.types.functional.CheckedBiFunction;
+import com.nan.funxtion.types.functional.CheckedConsumer;
 import com.nan.funxtion.types.functional.CheckedFunction;
 import com.nan.funxtion.types.functional.CheckedPredicate;
 import com.nan.tuplex.Tuple;
@@ -552,6 +553,19 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
     ImmutableList<T> distinct();
 
     // =========================================================
+    // Iteration
+    // =========================================================
+
+    /**
+     * Performs an action for each value in this list, preserving order.
+     *
+     * @param consumer the action to perform for each value
+     * @throws NullPointerException if {@code consumer} is null
+     * @throws Throwable if {@code consumer} throws
+     */
+    void forEach(CheckedConsumer<? super T> consumer) throws Throwable;
+
+    // =========================================================
     // Conversion
     // =========================================================
 
@@ -1040,6 +1054,13 @@ public sealed interface ImmutableList<T> permits ImmutableList.ArrayImmutableLis
             if (distinct.size() == values.size())
                 return this;
             return new ArrayImmutableList<>(distinct);
+        }
+
+        @Override
+        public void forEach(final CheckedConsumer<? super T> consumer) throws Throwable {
+            Objects.requireNonNull(consumer, "consumer must not be null");
+            for (final T value : values)
+                consumer.accept(value);
         }
 
         @Override
