@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -2236,6 +2237,36 @@ class ImmutableListTest {
             final List<Integer> result = list.toList();
 
             assertSame(list.toList(), result);
+        }
+    }
+
+    @Nested
+    class ToSet {
+
+        @Test
+        void shouldReturnEmptySetForEmptyList() {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final Set<Integer> result = list.toSet();
+
+            assertEquals(Set.of(), result);
+        }
+
+        @Test
+        void shouldReturnDistinctValuesPreservingFirstOccurrenceOrder() {
+            final ImmutableList<Integer> list = ImmutableList.of(3, 1, 3, 2, 1);
+            final Set<Integer> result = list.toSet();
+
+            assertEquals(List.of(3, 1, 2), new ArrayList<>(result));
+        }
+
+        @Test
+        void shouldReturnUnmodifiableSet() {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final Set<Integer> result = list.toSet();
+
+            assertThrows(
+                    UnsupportedOperationException.class,
+                    () -> result.add(4));
         }
     }
 
