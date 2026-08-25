@@ -113,6 +113,42 @@ Before opening a PR:
 - Confirm the summary reflects the actual diff.
 - Mark only validation commands that were actually run.
 - Mention skipped validation or follow-up work in notes.
+- Whenever creating a commit, include a PR-ready title and summary in the
+  handoff so the pull request can be opened without asking for another pass.
+
+## Optional WorkForge Integration
+
+The repository can optionally use
+[WorkForge](https://github.com/Nanielito/workforge#quick-start) for planning
+requirements and change requests. New clones do not necessarily include a
+`.workforge/` workspace; it is generated locally after installing and
+initializing WorkForge, then ignored by Git because it can contain credentials
+and generated provider state.
+
+When the user asks to configure WorkForge:
+
+- Point them to the WorkForge installation and quick-start docs.
+- Use `uvx workforge init .workforge --name funxtion --provider github
+  --namespace funxtion` as the starting command unless they choose another
+  provider or workspace path.
+- Keep `.workforge/.env` and `.workforge/output/` out of Git.
+
+When `.workforge/workforge.yaml` already exists and the task involves
+requirements, tracked work, issues, or implementation checklists:
+
+- Read `.workforge/README.md` for the workspace-specific workflow.
+- Prefer WorkForge for requirement previews, provider item discovery, agent
+  context, task completion, item comments, and status moves.
+- Preview before external writes. Do not run mutating commands such as
+  `create --execute`, `update --execute`, `claim-item`, `move-item`,
+  `complete-task`, or `comment-item` unless the user explicitly authorizes it.
+- Use `uvx workforge ...` unless the local workspace documents another command.
+- Generate implementation context with `agent-context` or `item-context` when
+  working from tracked items.
+- Treat provider checklist tasks as the implementation checklist. Mark tasks
+  complete only after the behavior is implemented and relevant validation passes.
+- Leave tracked items in progress while a pull request is open; merge or project
+  automation should close or move them to done.
 
 ## Agent Guides
 
