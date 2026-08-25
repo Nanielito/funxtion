@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import com.nan.funxtion.types.functional.CheckedFunction;
 import com.nan.tuplex.Tuple;
 import com.nan.tuplex.Tuples;
 
@@ -2490,6 +2491,132 @@ class ImmutableListTest {
             final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
 
             assertEquals("ImmutableList([1, 2, 3])", list.toString());
+        }
+    }
+
+    @Nested
+    class Identity {
+
+        @Test
+        void shouldRespectFunctorIdentity() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> mapped = list
+                    .map(CheckedFunction.identity());
+
+            assertEquals(list, mapped);
+        }
+
+        @Test
+        void shouldRespectFunctorIdentityForEmptyList() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> mapped = list
+                    .map(CheckedFunction.identity());
+
+            assertEquals(ImmutableList.empty(), mapped);
+            assertEquals(list, mapped);
+        }
+    }
+
+    @Nested
+    class Composition {
+
+        @Test
+        void shouldRespectFunctorComposition() throws Throwable {
+            final CheckedFunction<Integer, Integer> fn = x -> x + 1;
+            final CheckedFunction<Integer, Integer> gn = x -> x + 2;
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> left = list
+                    .map(fn)
+                    .map(gn);
+            final ImmutableList<Integer> right = list
+                    .map(fn.andThen(gn));
+
+            assertEquals(ImmutableList.of(4, 5, 6), left);
+            assertEquals(ImmutableList.of(4, 5, 6), right);
+            assertEquals(left, right);
+        }
+
+        @Test
+        void shouldRespectFunctorCompositionForEmptyList() throws Throwable {
+            final CheckedFunction<Integer, Integer> fn = x -> x + 1;
+            final CheckedFunction<Integer, Integer> gn = x -> x + 2;
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> left = list
+                    .map(fn)
+                    .map(gn);
+            final ImmutableList<Integer> right = list
+                    .map(fn.andThen(gn));
+
+            assertEquals(ImmutableList.empty(), left);
+            assertEquals(ImmutableList.empty(), right);
+            assertEquals(left, right);
+        }
+    }
+
+    @Nested
+    class Monad {
+
+        @Test
+        void shouldRespectLeftIdentity() throws Throwable {
+            final CheckedFunction<Integer, ImmutableList<Integer>> fn = x -> ImmutableList.of(x, x + 1);
+            final ImmutableList<Integer> left = ImmutableList.of(10)
+                    .flatMap(fn);
+            final ImmutableList<Integer> right = fn.apply(10);
+
+            assertEquals(ImmutableList.of(10, 11), left);
+            assertEquals(ImmutableList.of(10, 11), right);
+            assertEquals(left, right);
+        }
+
+        @Test
+        void shouldRespectRightIdentity() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> result = list
+                    .flatMap(ImmutableList::of);
+
+            assertEquals(list, result);
+        }
+
+        @Test
+        void shouldIgnoreRightIdentityForEmptyList() throws Throwable {
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> result = list
+                    .flatMap(ImmutableList::of);
+
+            assertEquals(ImmutableList.empty(), result);
+            assertEquals(list, result);
+        }
+
+        @Test
+        void shouldRespectAssociativity() throws Throwable {
+            final CheckedFunction<Integer, ImmutableList<Integer>> fn = x -> ImmutableList.of(x, x + 1);
+            final CheckedFunction<Integer, ImmutableList<Integer>> gn = x -> ImmutableList.of(x * 2);
+            final ImmutableList<Integer> list = ImmutableList.of(1, 2, 3);
+            final ImmutableList<Integer> left = list
+                    .flatMap(fn)
+                    .flatMap(gn);
+            final ImmutableList<Integer> right = list
+                    .flatMap(x -> fn.apply(x).flatMap(gn));
+
+            assertEquals(ImmutableList.of(2, 4, 4, 6, 6, 8), left);
+            assertEquals(ImmutableList.of(2, 4, 4, 6, 6, 8), right);
+            assertEquals(left, right);
+        }
+
+        @Test
+        void shouldRespectAssociativityForEmptyList() throws Throwable {
+            final CheckedFunction<Integer, ImmutableList<Integer>> fn = x -> ImmutableList.of(x, x + 1);
+            final CheckedFunction<Integer, ImmutableList<Integer>> gn = x -> ImmutableList.of(x * 2);
+            final ImmutableList<Integer> list = ImmutableList.empty();
+            final ImmutableList<Integer> left = list
+                    .flatMap(fn)
+                    .flatMap(gn);
+            final ImmutableList<Integer> right = list
+                    .flatMap(x -> fn.apply(x).flatMap(gn));
+
+            assertEquals(ImmutableList.empty(), left);
+            assertEquals(ImmutableList.empty(), right);
+            assertEquals(left, right);
         }
     }
 }
