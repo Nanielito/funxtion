@@ -26,7 +26,7 @@ repositories {
 }
 
 dependencies {
-    implementation("io.github.nanielito:funxtion:0.2.0")
+    implementation("io.github.nanielito:funxtion:1.0.0")
 }
 ```
 
