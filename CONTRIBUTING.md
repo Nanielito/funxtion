@@ -131,3 +131,5 @@ group changes correctly.
 
 Releases are handled by project maintainers. Contributors should focus on
 issues and pull requests; maintainers decide when to publish a new version.
+Do not update release versions, generated changelog entries, or publishing
+workflow behavior unless a maintainer asks for that change.
