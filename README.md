@@ -51,6 +51,13 @@ Build artifacts:
 Open an issue before proposing a change, then send a pull request following
 the workflow in [CONTRIBUTING.md](CONTRIBUTING.md).
 
+This repository can also be paired with
+[WorkForge](https://github.com/Nanielito/workforge#quick-start) to keep
+requirements and change requests organized. WorkForge can be installed and
+initialized locally when contributors want a structured flow for planning items,
+agent context, and implementation checklists. Its workspace is local-only and
+ignored by Git.
+
 ## Examples
 
 ### Option
