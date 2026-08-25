@@ -75,7 +75,7 @@ publishing {
 
             pom {
                 name.set("Funxtion")
-                description.set("A small, dependency-free functional library for Java")
+                description.set("A small functional library for Java")
                 url.set("https://github.com/nanielito/funxtion")
 
                 licenses {

@@ -25,8 +25,8 @@ Java 21 and 25.
   `ArrayImmutableList` implementation.
 - `Option`, `Either`, and `Try` use sealed interfaces with nested concrete
   implementations.
-- Tuples come from the external `com.nan:tuplex` dependency. Use `Tuple` and
-  `Tuples` instead of creating local tuple types.
+- Tuples come from the external `io.github.nanielito:tuplex` dependency. Use
+  `Tuple` and `Tuples` instead of creating local tuple types.
 
 ## Implementation Rules
 
