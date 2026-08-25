@@ -9,6 +9,11 @@ and collection types for writing explicit, composable code:
 - `ImmutableList<T>` for immutable, null-rejecting list operations.
 - `Checked*` functional interfaces for lambdas that can throw `Throwable`.
 
+Funxtion complements the JDK functional APIs instead of replacing them. It adds
+readable types for null-safe values, error-aware computations, and immutable
+functional workflows when `Optional`, `Stream`, or `try/catch` would make the
+code harder to follow.
+
 Funxtion uses [Tuplex](https://github.com/nanielito/tuplex) for tuple-backed
 operations such as `ImmutableList.partition(...)`.
 
@@ -156,6 +161,14 @@ ImmutableList<String> evenLabels = ImmutableList.of(1, 2, 3, 4)
         .collect(value -> value % 2 == 0
                 ? Option.some("even-" + value)
                 : Option.none());
+```
+
+For accumulation, named operations keep the intent visible without reaching for
+the overloaded `Stream.reduce(...)` variants:
+
+```java
+int total = ImmutableList.of(10, 20, 30)
+        .foldLeft(0, Integer::sum);
 ```
 
 Partitioning returns a two-value tuple where position `1` contains matching
